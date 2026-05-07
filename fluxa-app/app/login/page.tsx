@@ -9,9 +9,11 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
 import { Alert, AlertDescription } from '@/components/ui/alert'
+import { useAuth } from '@/hooks/use-auth'
 
 export default function LoginPage() {
   const router = useRouter()
+  const { setAuth } = useAuth()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [isLoading, setIsLoading] = useState(false)
@@ -37,9 +39,9 @@ export default function LoginPage() {
         throw new Error(data.error || 'Erro ao realizar login')
       }
 
-      // Salva o token no localStorage
-      if (data.token) {
-        localStorage.setItem('fluxa-token', data.token)
+      // Salva os dados no store global (Zustand com persistência)
+      if (data.token && data.user) {
+        setAuth(data.user, data.token)
       }
 
       // Sucesso no login
