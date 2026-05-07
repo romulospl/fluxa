@@ -22,13 +22,31 @@ export default function LoginPage() {
     setIsLoading(true)
     setError(null)
 
-    // Simulação de delay de rede
-    await new Promise((resolve) => setTimeout(resolve, 1000))
+    try {
+      const response = await fetch('/api/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email, password }),
+      })
 
-    if (email === 'admin@gmail.com' && password === '12345678') {
+      const data = await response.json()
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Erro ao realizar login')
+      }
+
+      // Salva o token no localStorage
+      if (data.token) {
+        localStorage.setItem('fluxa-token', data.token)
+      }
+
+      // Sucesso no login
       router.push('/dashboard')
-    } else {
-      setError('E-mail ou senha incorretos. Tente novamente.')
+    } catch (err: any) {
+      setError(err.message || 'Ocorreu um erro inesperado. Tente novamente.')
+    } finally {
       setIsLoading(false)
     }
   }

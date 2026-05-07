@@ -1,12 +1,12 @@
 import { NextResponse } from 'next/server'
-import { registerUser } from '@/lib/services/auth'
+import { loginUser } from '@/lib/services/auth'
 
 /**
  * @swagger
- * /api/register:
+ * /api/login:
  *   post:
- *     summary: Registra um novo usuário
- *     description: Cria uma nova conta de usuário com e-mail e senha.
+ *     summary: Autentica um usuário
+ *     description: Realiza o login do usuário verificando e-mail e senha.
  *     requestBody:
  *       required: true
  *       content:
@@ -17,35 +17,40 @@ import { registerUser } from '@/lib/services/auth'
  *               - email
  *               - password
  *             properties:
- *               name:
- *                 type: string
  *               email:
  *                 type: string
  *               password:
  *                 type: string
  *     responses:
- *       201:
- *         description: Usuário criado com sucesso
+ *       200:
+ *         description: Login realizado com sucesso
  *         content:
  *           application/json:
  *             schema:
  *               type: object
  *               properties:
- *                 id:
+ *                 user:
+ *                   type: object
+ *                   properties:
+ *                     id:
+ *                       type: string
+ *                     email:
+ *                       type: string
+ *                     name:
+ *                       type: string
+ *                 token:
  *                   type: string
- *                 email:
- *                   type: string
- *                 name:
- *                   type: string
+ *       401:
+ *         description: E-mail ou senha incorretos
  *       400:
- *         description: E-mail e senha são obrigatórios, ou E-mail já cadastrado
+ *         description: E-mail e senha são obrigatórios
  *       500:
  *         description: Erro interno
  */
 export async function POST(request: Request) {
   try {
     const body = await request.json()
-    const { name, email, password } = body
+    const { email, password } = body
 
     if (!email || !password) {
       return NextResponse.json(
@@ -54,28 +59,24 @@ export async function POST(request: Request) {
       )
     }
 
-    // Chama a camada de serviço para processar o cadastro
-    const user = await registerUser({ name, email, password })
+    // Chama a camada de serviço para processar o login
+    const result = await loginUser({ email, password })
 
-    return NextResponse.json(
-      user,
-      { status: 201 }
-    )
+    return NextResponse.json(result, { status: 200 })
   } catch (error: any) {
     // Tratamento de erros de negócio conhecidos
-    if (error.message === 'Este e-mail já está cadastrado') {
+    if (error.message === 'E-mail ou senha incorretos') {
       return NextResponse.json(
         { error: error.message },
-        { status: 400 }
+        { status: 401 }
       )
     }
 
-    console.error('Erro na rota de cadastro:', error)
+    console.error('Erro na rota de login:', error)
 
-    // Em desenvolvimento, podemos retornar o erro detalhado para facilitar o debug
     const errorMessage = process.env.NODE_ENV === 'development' 
       ? `Erro: ${error.message || 'Erro desconhecido'}`
-      : 'Erro interno ao processar o cadastro'
+      : 'Erro interno ao processar o login'
 
     return NextResponse.json(
       { error: errorMessage },
@@ -83,4 +84,3 @@ export async function POST(request: Request) {
     )
   }
 }
-

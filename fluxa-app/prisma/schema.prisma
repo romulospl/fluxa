@@ -12,7 +12,7 @@ datasource db {
 
 // Exemplo de model com padrão snake_case no banco e camelCase no TypeScript
 model User {
-  id        String   @id @default(cuid())
+  id        String   @id @default(uuid())
   email     String   @unique
   name      String?
   password  String
