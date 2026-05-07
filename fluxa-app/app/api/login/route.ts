@@ -62,7 +62,18 @@ export async function POST(request: Request) {
     // Chama a camada de serviço para processar o login
     const result = await loginUser({ email, password })
 
-    return NextResponse.json(result, { status: 200 })
+    const response = NextResponse.json(result, { status: 200 })
+
+    // Define o cookie com o token
+    response.cookies.set('fluxa-token', result.token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: 60 * 60 * 24, // 1 dia
+      path: '/',
+    })
+
+    return response
   } catch (error: any) {
     // Tratamento de erros de negócio conhecidos
     if (error.message === 'E-mail ou senha incorretos') {

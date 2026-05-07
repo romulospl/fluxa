@@ -12,7 +12,7 @@ interface AuthState {
   token: string | null
   isAuthenticated: boolean
   setAuth: (user: User, token: string) => void
-  logout: () => void
+  logout: () => Promise<void>
 }
 
 export const useAuth = create<AuthState>()(
@@ -22,7 +22,14 @@ export const useAuth = create<AuthState>()(
       token: null,
       isAuthenticated: false,
       setAuth: (user, token) => set({ user, token, isAuthenticated: true }),
-      logout: () => set({ user: null, token: null, isAuthenticated: false }),
+      logout: async () => {
+        try {
+          await fetch('/api/logout', { method: 'POST' })
+        } catch (e) {
+          console.error('Erro ao limpar cookie de sessão:', e)
+        }
+        set({ user: null, token: null, isAuthenticated: false })
+      },
     }),
     {
       name: 'fluxa-auth',
