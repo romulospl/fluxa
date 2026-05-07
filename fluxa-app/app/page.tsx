@@ -15,10 +15,10 @@ export default function HomePage() {
             <span className="text-xl font-semibold text-foreground">Fluxa</span>
           </div>
           <div className="flex items-center gap-4">
-            <Link href="/dashboard">
+            <Link href="/login">
               <Button variant="ghost">Entrar</Button>
             </Link>
-            <Link href="/onboarding">
+            <Link href="/register">
               <Button>Começar Agora</Button>
             </Link>
           </div>
@@ -39,7 +39,7 @@ export default function HomePage() {
             Crie cobranças em Reais e receba o valor convertido diretamente na sua carteira digital. Simples, transparente e rastreável na blockchain.
           </p>
           <div className="mt-10 flex flex-col items-center justify-center gap-4 sm:flex-row">
-            <Link href="/onboarding">
+            <Link href="/register">
               <Button size="lg" className="gap-2">
                 Criar Conta Grátis
                 <ArrowRight className="h-4 w-4" />
@@ -159,7 +159,7 @@ export default function HomePage() {
           <p className="mx-auto mb-8 max-w-xl text-muted-foreground">
             Crie sua conta em menos de 2 minutos e comece a receber pagamentos em cripto hoje.
           </p>
-          <Link href="/onboarding">
+          <Link href="/register">
             <Button size="lg" className="gap-2">
               Criar Conta Grátis
               <ArrowRight className="h-4 w-4" />
