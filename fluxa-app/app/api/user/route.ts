@@ -13,6 +13,8 @@ async function resolveToken(request: Request): Promise<string | null> {
  * @swagger
  * /api/user:
  *   put:
+ *     tags:
+ *       - Usuário
  *     summary: Atualiza os dados do usuário autenticado
  *     description: Substitui nome, e-mail e endereço completo do usuário autenticado.
  *     security:

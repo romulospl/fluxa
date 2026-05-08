@@ -5,6 +5,8 @@ import { registerUser } from '@/lib/services/auth'
  * @swagger
  * /api/register:
  *   post:
+ *     tags:
+ *       - Autenticação
  *     summary: Registra um novo usuário
  *     description: Cria uma nova conta de usuário com e-mail e senha.
  *     requestBody:

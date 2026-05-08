@@ -10,6 +10,10 @@ export const getApiDocs = async () => {
         version: '1.0.0',
         description: 'API Documentation for Fluxa App',
       },
+      tags: [
+        { name: 'Autenticação', description: 'Rotas de login, registro e logout' },
+        { name: 'Usuário', description: 'Rotas de consulta e atualização de dados do usuário' },
+      ],
       components: {
         securitySchemes: {
           BearerAuth: {

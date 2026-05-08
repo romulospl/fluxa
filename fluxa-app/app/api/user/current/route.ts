@@ -6,6 +6,8 @@ import { cookies } from 'next/headers'
  * @swagger
  * /api/user/current:
  *   get:
+ *     tags:
+ *       - Usuário
  *     summary: Obtém os dados do usuário autenticado
  *     description: Retorna as informações do usuário autenticado a partir do token JWT enviado no header Authorization ou via cookie.
  *     security:

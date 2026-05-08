@@ -13,6 +13,8 @@ async function resolveToken(request: Request): Promise<string | null> {
  * @swagger
  * /api/user/password:
  *   patch:
+ *     tags:
+ *       - Usuário
  *     summary: Altera a senha do usuário autenticado
  *     security:
  *       - BearerAuth: []

@@ -5,6 +5,8 @@ import { loginUser } from '@/lib/services/auth'
  * @swagger
  * /api/login:
  *   post:
+ *     tags:
+ *       - Autenticação
  *     summary: Autentica um usuário
  *     description: Realiza o login do usuário verificando e-mail e senha.
  *     requestBody:
