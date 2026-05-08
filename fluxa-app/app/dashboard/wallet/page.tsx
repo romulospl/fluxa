@@ -100,7 +100,7 @@ export default function WalletPage() {
                 <Label htmlFor="newAddress">Novo Endereço</Label>
                 <Input
                   id="newAddress"
-                  placeholder="0x... ou endereço Bitcoin"
+                  placeholder="0x... endereço da carteira"
                   value={newAddress}
                   onChange={(e) => {
                     setNewAddress(e.target.value)
@@ -134,8 +134,8 @@ export default function WalletPage() {
       </Card>
 
       {/* Info Cards */}
-      <div className="grid gap-4 sm:grid-cols-2">
-        <Card className="border-border bg-card">
+      <div className="grid gap-4 sm:grid-cols-1">
+        {/* <Card className="border-border bg-card">
           <CardHeader>
             <CardTitle className="text-base text-card-foreground">Redes Suportadas</CardTitle>
           </CardHeader>
@@ -155,7 +155,7 @@ export default function WalletPage() {
               </li>
             </ul>
           </CardContent>
-        </Card>
+        </Card> */}
 
         <Card className="border-border bg-card">
           <CardHeader>
@@ -164,7 +164,7 @@ export default function WalletPage() {
           <CardContent>
             <ul className="space-y-2 text-sm text-muted-foreground">
               <li>• Verifique o endereço antes de salvar</li>
-              <li>• Use sempre a rede correta</li>
+              {/* <li>• Use sempre a rede correta</li> */}
               <li>• Transações são irreversíveis</li>
             </ul>
           </CardContent>
