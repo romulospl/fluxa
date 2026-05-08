@@ -1,7 +1,6 @@
 import Link from 'next/link'
 import { Zap, ArrowRight, Shield, Wallet, RefreshCw, CheckCircle2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { CryptoPrices } from '@/components/crypto-prices'
 
 export default function HomePage() {
   return (
@@ -54,9 +53,6 @@ export default function HomePage() {
           </div>
         </div>
       </section>
-
-      {/* Crypto Prices */}
-      <CryptoPrices />
 
       {/* Features */}
       <section className="border-t border-border py-20">
