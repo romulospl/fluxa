@@ -168,6 +168,22 @@ export async function updateUser(
   }
 }
 
+export async function changePassword(
+  token: string,
+  { currentPassword, newPassword }: { currentPassword: string; newPassword: string }
+) {
+  const decoded = await verifyToken(token)
+
+  const user = await db.user.findUnique({ where: { id: decoded.userId } })
+  if (!user) throw new Error('Usuário não encontrado')
+
+  const isValid = await bcrypt.compare(currentPassword, user.password)
+  if (!isValid) throw new Error('Senha atual incorreta')
+
+  const hashed = await bcrypt.hash(newPassword, 10)
+  await db.user.update({ where: { id: user.id }, data: { password: hashed } })
+}
+
 export async function getUserFromToken(token: string) {
   const decoded = await verifyToken(token)
 
