@@ -91,7 +91,7 @@ export default function RegisterPage() {
                   <AlertDescription>Cadastro realizado com sucesso! Redirecionando...</AlertDescription>
                 </Alert>
               )}
-              
+
               <div className="space-y-2">
                 <Label htmlFor="name">Nome Completo</Label>
                 <div className="relative">
@@ -124,7 +124,7 @@ export default function RegisterPage() {
                   />
                 </div>
               </div>
-              
+
               <div className="space-y-2">
                 <Label htmlFor="password">Senha</Label>
                 <div className="relative">
@@ -148,7 +148,7 @@ export default function RegisterPage() {
                   <Wallet className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
                   <Input
                     id="walletAddress"
-                    placeholder="0x... ou endereço Solana"
+                    placeholder="Gx... ou endereço"
                     className="pl-10 font-mono text-sm"
                     value={walletAddress}
                     onChange={(e) => setWalletAddress(e.target.value)}

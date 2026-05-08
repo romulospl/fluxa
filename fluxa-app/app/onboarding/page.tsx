@@ -21,30 +21,30 @@ export default function OnboardingPage() {
 
   const validateStep1 = () => {
     const newErrors: Record<string, string> = {}
-    
+
     if (!formData.name.trim()) {
       newErrors.name = 'Nome é obrigatório'
     }
-    
+
     if (!formData.email.trim()) {
       newErrors.email = 'E-mail é obrigatório'
     } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
       newErrors.email = 'E-mail inválido'
     }
-    
+
     setErrors(newErrors)
     return Object.keys(newErrors).length === 0
   }
 
   const validateStep2 = () => {
     const newErrors: Record<string, string> = {}
-    
+
     if (!formData.walletAddress.trim()) {
       newErrors.walletAddress = 'Endereço de carteira é obrigatório'
     } else if (!validateWalletAddress(formData.walletAddress)) {
       newErrors.walletAddress = 'Endereço de carteira inválido'
     }
-    
+
     setErrors(newErrors)
     return Object.keys(newErrors).length === 0
   }
@@ -138,7 +138,7 @@ export default function OnboardingPage() {
                 <Label htmlFor="wallet">Endereço da Carteira</Label>
                 <Input
                   id="wallet"
-                  placeholder="0x..."
+                  placeholder="Gx..."
                   value={formData.walletAddress}
                   onChange={(e) => {
                     setFormData({ ...formData, walletAddress: e.target.value })
@@ -194,9 +194,8 @@ export default function OnboardingPage() {
         {[1, 2, 3].map((s) => (
           <div
             key={s}
-            className={`h-2 w-8 rounded-full transition-colors ${
-              s <= step ? 'bg-primary' : 'bg-muted'
-            }`}
+            className={`h-2 w-8 rounded-full transition-colors ${s <= step ? 'bg-primary' : 'bg-muted'
+              }`}
           />
         ))}
       </div>
