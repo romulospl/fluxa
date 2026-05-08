@@ -16,6 +16,25 @@ import { formatCNPJ, formatCEP } from '@/lib/formatters'
 import { useCepLookup } from '@/hooks/use-cep-lookup'
 import { useApiMutation } from '@/hooks/use-api-mutation'
 
+function validateCNPJ(cnpj: string): boolean {
+  const digits = cnpj.replace(/\D/g, '')
+  if (digits.length !== 14) return false
+  if (/^(\d)\1{13}$/.test(digits)) return false
+
+  const calcDigit = (slice: string, weights: number[]) => {
+    const sum = slice.split('').reduce((acc, d, i) => acc + parseInt(d) * weights[i], 0)
+    const rem = sum % 11
+    return rem < 2 ? 0 : 11 - rem
+  }
+
+  const d1 = calcDigit(digits.slice(0, 12), [5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2])
+  const d2 = calcDigit(digits.slice(0, 13), [6, 5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2])
+
+  return d1 === parseInt(digits[12]) && d2 === parseInt(digits[13])
+}
+
+const STEPS = ['Dados da conta', 'Endereço da carteira', 'Endereço']
+
 export default function RegisterPage() {
   const router = useRouter()
   const [step, setStep] = useState(1)
@@ -23,8 +42,11 @@ export default function RegisterPage() {
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
-  const [walletAddress, setWalletAddress] = useState('')
+  const [confirmPassword, setConfirmPassword] = useState('')
   const [cnpj, setCnpj] = useState('')
+  const [cnpjError, setCnpjError] = useState('')
+
+  const [walletAddress, setWalletAddress] = useState('')
 
   const [zipCode, setZipCode] = useState('')
   const [street, setStreet] = useState('')
@@ -51,10 +73,28 @@ export default function RegisterPage() {
     )
   }
 
-  const handleNextStep = (e: React.FormEvent) => {
+  const handleStep1 = (e: React.FormEvent) => {
     e.preventDefault()
     setError(null)
+
+    if (!validateCNPJ(cnpj)) {
+      setCnpjError('CNPJ inválido')
+      return
+    }
+    setCnpjError('')
+
+    if (password !== confirmPassword) {
+      setError('As senhas não coincidem')
+      return
+    }
+
     setStep(2)
+  }
+
+  const handleStep2 = (e: React.FormEvent) => {
+    e.preventDefault()
+    setError(null)
+    setStep(3)
   }
 
   const handleRegister = (e: React.FormEvent) => {
@@ -97,25 +137,34 @@ export default function RegisterPage() {
 
         <div className="space-y-2">
           <div className="flex gap-2">
-            <div className="h-1.5 flex-1 rounded-full bg-primary transition-colors" />
-            <div className={`h-1.5 flex-1 rounded-full transition-colors ${step === 2 ? 'bg-primary' : 'bg-muted'}`} />
+            {STEPS.map((_, i) => (
+              <div
+                key={i}
+                className={`h-1.5 flex-1 rounded-full transition-colors ${step > i ? 'bg-primary' : 'bg-muted'}`}
+              />
+            ))}
           </div>
           <div className="flex justify-between text-xs text-muted-foreground">
-            <span className={step === 1 ? 'font-medium text-primary' : ''}>Dados da conta</span>
-            <span className={step === 2 ? 'font-medium text-primary' : ''}>Endereço</span>
+            {STEPS.map((label, i) => (
+              <span key={i} className={step === i + 1 ? 'font-medium text-primary' : ''}>
+                {label}
+              </span>
+            ))}
           </div>
         </div>
 
         <Card className="border-border/50 bg-card/50 backdrop-blur-sm">
           <CardHeader className="space-y-1">
-            <CardTitle className="text-xl">{step === 1 ? 'Dados da conta' : 'Endereço'}</CardTitle>
+            <CardTitle className="text-xl">{STEPS[step - 1]}</CardTitle>
             <CardDescription>
-              {step === 1 ? 'Preencha seus dados para se registrar' : 'Informe o endereço da sua empresa'}
+              {step === 1 && 'Preencha seus dados para se registrar'}
+              {step === 2 && 'Informe o endereço da sua carteira de criptomoedas'}
+              {step === 3 && 'Informe o endereço da sua empresa'}
             </CardDescription>
           </CardHeader>
 
           {step === 1 && (
-            <form onSubmit={handleNextStep}>
+            <form onSubmit={handleStep1}>
               <CardContent className="space-y-4">
                 {error && (
                   <Alert variant="destructive" className="animate-in fade-in slide-in-from-top-1">
@@ -131,7 +180,17 @@ export default function RegisterPage() {
 
                 <div className="space-y-2">
                   <Label htmlFor="cnpj">CNPJ</Label>
-                  <InputWithIcon icon={<Building2 />} id="cnpj" placeholder="00.000.000/0000-00" className="font-mono" value={cnpj} onChange={(e) => setCnpj(formatCNPJ(e.target.value))} required />
+                  <InputWithIcon
+                    icon={<Building2 />}
+                    id="cnpj"
+                    placeholder="00.000.000/0000-00"
+                    className={`font-mono ${cnpjError ? 'border-destructive' : ''}`}
+                    value={cnpj}
+                    onChange={(e) => { setCnpj(formatCNPJ(e.target.value)); setCnpjError('') }}
+                    onBlur={() => { if (cnpj && !validateCNPJ(cnpj)) setCnpjError('CNPJ inválido') }}
+                    required
+                  />
+                  {cnpjError && <p className="text-xs text-destructive">{cnpjError}</p>}
                 </div>
 
                 <div className="space-y-2">
@@ -145,8 +204,17 @@ export default function RegisterPage() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="walletAddress">Endereço da Carteira</Label>
-                  <InputWithIcon icon={<Wallet />} id="walletAddress" placeholder="Gx... ou endereço" className="font-mono text-sm" value={walletAddress} onChange={(e) => setWalletAddress(e.target.value)} required />
+                  <Label htmlFor="confirmPassword">Confirmar senha</Label>
+                  <PasswordInput
+                    id="confirmPassword"
+                    placeholder="••••••••"
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    required
+                  />
+                  {confirmPassword && password !== confirmPassword && (
+                    <p className="text-xs text-destructive">As senhas não coincidem</p>
+                  )}
                 </div>
               </CardContent>
               <CardFooter className="flex flex-col space-y-4 pt-6">
@@ -160,6 +228,38 @@ export default function RegisterPage() {
           )}
 
           {step === 2 && (
+            <form onSubmit={handleStep2}>
+              <CardContent className="space-y-4">
+                {error && (
+                  <Alert variant="destructive" className="animate-in fade-in slide-in-from-top-1">
+                    <AlertCircle className="h-4 w-4" />
+                    <AlertDescription>{error}</AlertDescription>
+                  </Alert>
+                )}
+
+                <div className="space-y-2">
+                  <Label htmlFor="walletAddress">Endereço da Carteira</Label>
+                  <InputWithIcon
+                    icon={<Wallet />}
+                    id="walletAddress"
+                    placeholder="Gx... ou endereço"
+                    className="font-mono text-sm"
+                    value={walletAddress}
+                    onChange={(e) => setWalletAddress(e.target.value)}
+                    required
+                  />
+                </div>
+              </CardContent>
+              <CardFooter className="flex flex-col space-y-3 pt-6">
+                <Button type="submit" className="w-full font-semibold">Próximo</Button>
+                <Button type="button" variant="ghost" className="w-full" onClick={() => { setStep(1); setError(null) }}>
+                  Voltar
+                </Button>
+              </CardFooter>
+            </form>
+          )}
+
+          {step === 3 && (
             <form onSubmit={handleRegister}>
               <CardContent className="space-y-4">
                 {error && (
@@ -239,7 +339,7 @@ export default function RegisterPage() {
                   type="button"
                   variant="ghost"
                   className="w-full"
-                  onClick={() => { setStep(1); setError(null) }}
+                  onClick={() => { setStep(2); setError(null) }}
                   disabled={isLoading || success}
                 >
                   Voltar
