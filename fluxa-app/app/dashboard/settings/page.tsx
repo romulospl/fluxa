@@ -13,6 +13,15 @@ function formatCEP(value: string) {
   return d.replace(/^(\d{5})(\d)/, '$1-$2')
 }
 
+function formatCNPJ(value: string) {
+  const d = value.replace(/\D/g, '').slice(0, 14)
+  return d
+    .replace(/^(\d{2})(\d)/, '$1.$2')
+    .replace(/^(\d{2})\.(\d{3})(\d)/, '$1.$2.$3')
+    .replace(/\.(\d{3})(\d)/, '.$1/$2')
+    .replace(/(\d{4})(\d)/, '$1-$2')
+}
+
 type UserData = {
   id: string
   email: string
@@ -41,6 +50,7 @@ export default function SettingsPage() {
 
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
+  const [cnpj, setCnpj] = useState('')
   const [zipCode, setZipCode] = useState('')
   const [street, setStreet] = useState('')
   const [number, setNumber] = useState('')
@@ -67,6 +77,7 @@ export default function SettingsPage() {
         const res = await fetch('/api/user/current')
         if (!res.ok) return
         const data: UserData = await res.json()
+        setCnpj(data.cnpj ? formatCNPJ(data.cnpj) : '')
         const fields = {
           name: data.name ?? '',
           email: data.email ?? '',
@@ -233,6 +244,17 @@ export default function SettingsPage() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   disabled={!isEditing}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="cnpj">CNPJ</Label>
+                <Input
+                  id="cnpj"
+                  placeholder="00.000.000/0000-00"
+                  className="font-mono"
+                  value={cnpj}
+                  disabled
+                  readOnly
                 />
               </div>
             </div>
