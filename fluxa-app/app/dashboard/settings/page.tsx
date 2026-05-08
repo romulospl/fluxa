@@ -1,7 +1,7 @@
 'use client'
 
-import { useState } from 'react'
-import { User, Shield, Save, Check, MapPin, Lock, Loader2 } from 'lucide-react'
+import { useState, useEffect } from 'react'
+import { User, Shield, Save, Check, MapPin, Lock, Loader2, Pencil, X } from 'lucide-react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -12,13 +12,33 @@ function formatCEP(value: string) {
   return d.replace(/^(\d{5})(\d)/, '$1-$2')
 }
 
+type UserData = {
+  id: string
+  email: string
+  name: string
+  cnpj: string | null
+  walletAddress: string | null
+  address: {
+    id: string
+    zipCode: string
+    street: string
+    number: string
+    complement: string | null
+    neighborhood: string
+    city: string
+    state: string
+  } | null
+}
+
 export default function SettingsPage() {
+  const [isLoadingUser, setIsLoadingUser] = useState(true)
+  const [isEditing, setIsEditing] = useState(false)
+
   const [profileSaved, setProfileSaved] = useState(false)
   const [passwordSaved, setPasswordSaved] = useState(false)
 
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
-
   const [zipCode, setZipCode] = useState('')
   const [street, setStreet] = useState('')
   const [number, setNumber] = useState('')
@@ -28,10 +48,68 @@ export default function SettingsPage() {
   const [state, setState] = useState('')
   const [isFetchingCep, setIsFetchingCep] = useState(false)
 
+  // snapshot para restaurar ao cancelar edição
+  const [snapshot, setSnapshot] = useState({
+    name: '', email: '', zipCode: '', street: '', number: '',
+    complement: '', neighborhood: '', city: '', state: '',
+  })
+
   const [currentPassword, setCurrentPassword] = useState('')
   const [newPassword, setNewPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
   const [passwordError, setPasswordError] = useState<string | null>(null)
+
+  useEffect(() => {
+    async function loadUser() {
+      try {
+        const res = await fetch('/api/current')
+        if (!res.ok) return
+        const data: UserData = await res.json()
+        const fields = {
+          name: data.name ?? '',
+          email: data.email ?? '',
+          zipCode: data.address?.zipCode ? formatCEP(data.address.zipCode) : '',
+          street: data.address?.street ?? '',
+          number: data.address?.number ?? '',
+          complement: data.address?.complement ?? '',
+          neighborhood: data.address?.neighborhood ?? '',
+          city: data.address?.city ?? '',
+          state: data.address?.state ?? '',
+        }
+        setName(fields.name)
+        setEmail(fields.email)
+        setZipCode(fields.zipCode)
+        setStreet(fields.street)
+        setNumber(fields.number)
+        setComplement(fields.complement)
+        setNeighborhood(fields.neighborhood)
+        setCity(fields.city)
+        setState(fields.state)
+        setSnapshot(fields)
+      } finally {
+        setIsLoadingUser(false)
+      }
+    }
+    loadUser()
+  }, [])
+
+  const handleEdit = () => {
+    setSnapshot({ name, email, zipCode, street, number, complement, neighborhood, city, state })
+    setIsEditing(true)
+  }
+
+  const handleCancel = () => {
+    setName(snapshot.name)
+    setEmail(snapshot.email)
+    setZipCode(snapshot.zipCode)
+    setStreet(snapshot.street)
+    setNumber(snapshot.number)
+    setComplement(snapshot.complement)
+    setNeighborhood(snapshot.neighborhood)
+    setCity(snapshot.city)
+    setState(snapshot.state)
+    setIsEditing(false)
+  }
 
   const handleCepBlur = async () => {
     const digits = zipCode.replace(/\D/g, '')
@@ -55,6 +133,7 @@ export default function SettingsPage() {
 
   const handleSaveProfile = (e: React.FormEvent) => {
     e.preventDefault()
+    setIsEditing(false)
     setProfileSaved(true)
     setTimeout(() => setProfileSaved(false), 2000)
   }
@@ -77,6 +156,14 @@ export default function SettingsPage() {
     setTimeout(() => setPasswordSaved(false), 2000)
   }
 
+  if (isLoadingUser) {
+    return (
+      <div className="flex items-center justify-center py-20">
+        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+      </div>
+    )
+  }
+
   return (
     <div className="space-y-6">
       <div>
@@ -87,12 +174,20 @@ export default function SettingsPage() {
       {/* Dados pessoais + endereço */}
       <form onSubmit={handleSaveProfile}>
         <Card className="border-border bg-card">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-card-foreground">
-              <User className="h-5 w-5 text-primary" />
-              Dados Pessoais
-            </CardTitle>
-            <CardDescription>Atualize seu nome, e-mail e endereço</CardDescription>
+          <CardHeader className="flex flex-row items-start justify-between">
+            <div>
+              <CardTitle className="flex items-center gap-2 text-card-foreground">
+                <User className="h-5 w-5 text-primary" />
+                Dados Pessoais
+              </CardTitle>
+              <CardDescription>Atualize seu nome, e-mail e endereço</CardDescription>
+            </div>
+            {!isEditing && (
+              <Button type="button" variant="outline" size="sm" className="gap-2" onClick={handleEdit}>
+                <Pencil className="h-4 w-4" />
+                Editar
+              </Button>
+            )}
           </CardHeader>
           <CardContent className="space-y-6">
             <div className="grid gap-4 sm:grid-cols-2">
@@ -103,6 +198,7 @@ export default function SettingsPage() {
                   placeholder="Seu nome"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
+                  disabled={!isEditing}
                 />
               </div>
               <div className="space-y-2">
@@ -113,6 +209,7 @@ export default function SettingsPage() {
                   placeholder="voce@exemplo.com"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
+                  disabled={!isEditing}
                 />
               </div>
             </div>
@@ -134,6 +231,7 @@ export default function SettingsPage() {
                         value={zipCode}
                         onChange={(e) => setZipCode(formatCEP(e.target.value))}
                         onBlur={handleCepBlur}
+                        disabled={!isEditing}
                       />
                       {isFetchingCep && (
                         <Loader2 className="absolute right-3 top-2.5 h-4 w-4 animate-spin text-muted-foreground" />
@@ -149,6 +247,7 @@ export default function SettingsPage() {
                       maxLength={2}
                       value={state}
                       onChange={(e) => setState(e.target.value.toUpperCase())}
+                      disabled={!isEditing}
                     />
                   </div>
                 </div>
@@ -160,6 +259,7 @@ export default function SettingsPage() {
                     placeholder="Rua, Avenida..."
                     value={street}
                     onChange={(e) => setStreet(e.target.value)}
+                    disabled={!isEditing}
                   />
                 </div>
 
@@ -171,6 +271,7 @@ export default function SettingsPage() {
                       placeholder="123"
                       value={number}
                       onChange={(e) => setNumber(e.target.value)}
+                      disabled={!isEditing}
                     />
                   </div>
                   <div className="space-y-2">
@@ -180,6 +281,7 @@ export default function SettingsPage() {
                       placeholder="Apto, Sala..."
                       value={complement}
                       onChange={(e) => setComplement(e.target.value)}
+                      disabled={!isEditing}
                     />
                   </div>
                 </div>
@@ -192,6 +294,7 @@ export default function SettingsPage() {
                       placeholder="Centro"
                       value={neighborhood}
                       onChange={(e) => setNeighborhood(e.target.value)}
+                      disabled={!isEditing}
                     />
                   </div>
                   <div className="space-y-2">
@@ -201,6 +304,7 @@ export default function SettingsPage() {
                       placeholder="São Paulo"
                       value={city}
                       onChange={(e) => setCity(e.target.value)}
+                      disabled={!isEditing}
                     />
                   </div>
                 </div>
@@ -209,21 +313,27 @@ export default function SettingsPage() {
           </CardContent>
         </Card>
 
-        <div className="mt-4 flex justify-end">
-          <Button type="submit" className="gap-2">
-            {profileSaved ? (
-              <>
-                <Check className="h-4 w-4" />
-                Salvo!
-              </>
-            ) : (
-              <>
-                <Save className="h-4 w-4" />
-                Salvar Dados
-              </>
-            )}
-          </Button>
-        </div>
+        {isEditing && (
+          <div className="mt-4 flex justify-end gap-2">
+            <Button type="button" variant="outline" className="gap-2" onClick={handleCancel}>
+              <X className="h-4 w-4" />
+              Cancelar
+            </Button>
+            <Button type="submit" className="gap-2">
+              {profileSaved ? (
+                <>
+                  <Check className="h-4 w-4" />
+                  Salvo!
+                </>
+              ) : (
+                <>
+                  <Save className="h-4 w-4" />
+                  Salvar Dados
+                </>
+              )}
+            </Button>
+          </div>
+        )}
       </form>
 
       {/* Segurança */}
