@@ -2,36 +2,49 @@ import { db } from '@/lib/db'
 import bcrypt from 'bcrypt'
 import jwt from 'jsonwebtoken'
 
-export async function registerUser({ name, email, password, walletAddress }: any) {
-  // 1. Validação de regras de negócio (ex: e-mail já existe)
-  const existingUser = await db.user.findUnique({
-    where: { email }
-  })
+export async function registerUser({ name, email, password, walletAddress, cnpj, address }: any) {
+  const existingUser = await db.user.findUnique({ where: { email } })
+  if (existingUser) throw new Error('Este e-mail já está cadastrado')
 
-  if (existingUser) {
-    throw new Error('Este e-mail já está cadastrado')
+  if (cnpj) {
+    const existingCnpj = await db.user.findUnique({ where: { cnpj } })
+    if (existingCnpj) throw new Error('Este CNPJ já está cadastrado')
   }
 
-  // 2. Hash da senha
   const hashedPassword = await bcrypt.hash(password, 10)
 
-  // 3. Persistência dos dados
   const user = await db.user.create({
     data: {
       name,
       email,
       password: hashedPassword,
-      walletAddress
-    }
+      walletAddress,
+      cnpj: cnpj || null,
+      ...(address && {
+        address: {
+          create: {
+            zipCode: address.zipCode,
+            street: address.street,
+            number: address.number,
+            complement: address.complement || null,
+            neighborhood: address.neighborhood,
+            city: address.city,
+            state: address.state,
+          },
+        },
+      }),
+    },
+    include: { address: true },
   })
-
 
   return {
     id: user.id,
     email: user.email,
     name: user.name,
+    cnpj: user.cnpj,
     walletAddress: user.walletAddress,
-    createdAt: user.createdAt
+    address: user.address,
+    createdAt: user.createdAt,
   }
 }
 

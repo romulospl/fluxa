@@ -12,14 +12,35 @@ datasource db {
 
 // Exemplo de model com padrão snake_case no banco e camelCase no TypeScript
 model User {
-  id        String   @id @default(uuid()) @db.Uuid
-  email     String   @unique
-  name      String?
-  password  String
-  walletAddress String? @map("wallet_address")
+  id            String   @id @default(uuid()) @db.Uuid
+  email         String   @unique
+  name          String?
+  cnpj          String?  @unique @map("cnpj")
+  password      String
+  walletAddress String?  @map("wallet_address")
   createdAt     DateTime @default(now()) @map("created_at")
   updatedAt     DateTime @updatedAt @map("updated_at")
 
-  // Este comando mapeia o nome do Model (User) para a tabela (users) no banco de dados
+  address Address?
+
   @@map("users")
+}
+
+model Address {
+  id           String  @id @default(uuid()) @db.Uuid
+  zipCode      String  @map("zip_code")
+  street       String  @map("street")
+  number       String  @map("number")
+  complement   String? @map("complement")
+  neighborhood String  @map("neighborhood")
+  city         String  @map("city")
+  state        String  @map("state")
+
+  userId    String   @unique @map("user_id") @db.Uuid
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("addresses")
 }

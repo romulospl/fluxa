@@ -52,7 +52,7 @@ import { registerUser } from '@/lib/services/auth'
 export async function POST(request: Request) {
   try {
     const body = await request.json()
-    const { name, email, password, walletAddress } = body
+    const { name, email, password, walletAddress, cnpj, address } = body
 
     if (!email || !password) {
       return NextResponse.json(
@@ -61,8 +61,7 @@ export async function POST(request: Request) {
       )
     }
 
-    // Chama a camada de serviço para processar o cadastro
-    const user = await registerUser({ name, email, password, walletAddress })
+    const user = await registerUser({ name, email, password, walletAddress, cnpj, address })
 
     return NextResponse.json(
       user,

@@ -18,13 +18,11 @@ interface CoinPrice {
 }
 
 const COIN_MAP: Record<string, { label: string; symbol: string }> = {
-  BTCUSDT:  { label: 'Bitcoin',  symbol: 'BTC'  },
-  ETHUSDT:  { label: 'Ethereum', symbol: 'ETH'  },
-  XLMUSDT:  { label: 'Stellar',  symbol: 'XLM'  },
+  BTCUSDT: { label: 'Bitcoin', symbol: 'BTC' },
+  ETHUSDT: { label: 'Ethereum', symbol: 'ETH' },
+  XLMUSDT: { label: 'Stellar', symbol: 'XLM' },
   USDCUSDT: { label: 'USD Coin', symbol: 'USDC' },
 }
-
-const REFRESH_INTERVAL = 60_000
 
 const API_URL =
   'https://api.binance.com/api/v3/ticker/price?symbols=%5B%22BTCUSDT%22,%22ETHUSDT%22,%22XLMUSDT%22,%22USDCUSDT%22,%22USDTBRL%22%5D'
@@ -43,9 +41,9 @@ function parsePrices(tickers: BinanceTicker[]): CoinPrice[] {
   const usdtBrl = rates['USDTBRL'] ?? 1
 
   return Object.entries(COIN_MAP).map(([pair, meta]) => ({
-    label:  meta.label,
+    label: meta.label,
     symbol: meta.symbol,
-    brl:    (rates[pair] ?? 0) * usdtBrl,
+    brl: (rates[pair] ?? 0) * usdtBrl,
   }))
 }
 
@@ -71,8 +69,6 @@ export function QuotesCard() {
 
   useEffect(() => {
     fetchPrices()
-    const timer = setInterval(() => fetchPrices(), REFRESH_INTERVAL)
-    return () => clearInterval(timer)
   }, [fetchPrices])
 
   const loading = coins.length === 0 && !error
@@ -94,24 +90,24 @@ export function QuotesCard() {
         <div className="space-y-3">
           {loading
             ? Array.from({ length: 4 }).map((_, i) => (
-                <div key={i} className="flex items-center justify-between rounded-lg bg-secondary/30 p-3">
-                  <div className="flex items-center gap-3">
-                    <Skeleton className="h-10 w-10 rounded-full" />
-                    <div className="space-y-1.5">
-                      <Skeleton className="h-4 w-20" />
-                      <Skeleton className="h-3 w-10" />
-                    </div>
+              <div key={i} className="flex items-center justify-between rounded-lg bg-secondary/30 p-3">
+                <div className="flex items-center gap-3">
+                  <Skeleton className="h-10 w-10 rounded-full" />
+                  <div className="space-y-1.5">
+                    <Skeleton className="h-4 w-20" />
+                    <Skeleton className="h-3 w-10" />
                   </div>
-                  <Skeleton className="h-4 w-24" />
                 </div>
-              ))
+                <Skeleton className="h-4 w-24" />
+              </div>
+            ))
             : error && coins.length === 0
-            ? (
+              ? (
                 <p className="py-4 text-center text-sm text-muted-foreground">
                   Não foi possível carregar as cotações.
                 </p>
               )
-            : coins.map((coin) => (
+              : coins.map((coin) => (
                 <div
                   key={coin.symbol}
                   className="flex items-center justify-between rounded-lg bg-secondary/30 p-3"
@@ -133,10 +129,6 @@ export function QuotesCard() {
           }
         </div>
 
-        <div className="mt-4 flex items-center justify-center gap-1.5 text-xs text-muted-foreground">
-          <div className="h-1.5 w-1.5 rounded-full bg-success animate-pulse" />
-          Atualiza automaticamente a cada minuto
-        </div>
       </CardContent>
     </Card>
   )
