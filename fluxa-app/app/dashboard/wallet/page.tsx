@@ -1,34 +1,76 @@
 'use client'
 
-import { useState } from 'react'
-import { Copy, Check, ExternalLink, Wallet, AlertCircle } from 'lucide-react'
+import { useState, useEffect } from 'react'
+import { Copy, Check, Wallet, AlertCircle, Loader2 } from 'lucide-react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { LoadingButton } from '@/components/ui/loading-button'
 import { validateWalletAddress } from '@/lib/data'
 import { useCopyToClipboard } from '@/hooks/use-copy-to-clipboard'
+import { toastSuccess, toastError } from '@/lib/toast'
 
 export default function WalletPage() {
-  const [walletAddress, setWalletAddress] = useState('0x742d35Cc6634C0532925a3b844Bc9e7595f00000')
+  const [walletAddress, setWalletAddress] = useState<string | null>(null)
+  const [isLoadingUser, setIsLoadingUser] = useState(true)
   const [isEditing, setIsEditing] = useState(false)
+  const [isSaving, setIsSaving] = useState(false)
   const [newAddress, setNewAddress] = useState('')
   const [error, setError] = useState('')
   const { copy, isCopied } = useCopyToClipboard()
 
-  const handleSaveAddress = () => {
-    if (!validateWalletAddress(newAddress)) {
+  useEffect(() => {
+    async function loadWallet() {
+      try {
+        const res = await fetch('/api/users/current')
+        if (!res.ok) return
+        const data = await res.json()
+        setWalletAddress(data.walletAddress ?? '')
+      } finally {
+        setIsLoadingUser(false)
+      }
+    }
+    loadWallet()
+  }, [])
+
+  const handleSaveAddress = async () => {
+    const trimmedAddress = newAddress.trim()
+    if (!validateWalletAddress(trimmedAddress)) {
       setError('Endereço de carteira inválido')
       return
     }
-    setWalletAddress(newAddress)
-    setIsEditing(false)
-    setNewAddress('')
-    setError('')
+    setIsSaving(true)
+    try {
+      const res = await fetch('/api/users/wallet', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ walletAddress: trimmedAddress }),
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || 'Erro ao salvar endereço')
+      setWalletAddress(data.walletAddress)
+      setIsEditing(false)
+      setNewAddress('')
+      setError('')
+      toastSuccess('Endereço de carteira atualizado!')
+    } catch (err: any) {
+      toastError(err.message || 'Erro ao salvar endereço')
+    } finally {
+      setIsSaving(false)
+    }
   }
 
   const shortenAddress = (address: string) =>
     `${address.slice(0, 10)}...${address.slice(-8)}`
+
+  if (isLoadingUser) {
+    return (
+      <div className="flex items-center justify-center py-20">
+        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+      </div>
+    )
+  }
 
   return (
     <div className="space-y-6">
@@ -52,24 +94,22 @@ export default function WalletPage() {
         <CardContent>
           {!isEditing ? (
             <div className="space-y-4">
-              <div className="flex items-center gap-3 rounded-lg bg-secondary/50 p-4">
-                <div className="flex-1 font-mono text-sm text-card-foreground">
-                  <span className="hidden sm:inline">{walletAddress}</span>
-                  <span className="sm:hidden">{shortenAddress(walletAddress)}</span>
-                </div>
-                <Button variant="ghost" size="icon" onClick={() => copy(walletAddress)} className="shrink-0">
-                  {isCopied() ? <Check className="h-4 w-4 text-success" /> : <Copy className="h-4 w-4" />}
-                  <span className="sr-only">Copiar endereço</span>
-                </Button>
-                <a href={`https://etherscan.io/address/${walletAddress}`} target="_blank" rel="noopener noreferrer" className="shrink-0">
-                  <Button variant="ghost" size="icon">
-                    <ExternalLink className="h-4 w-4" />
-                    <span className="sr-only">Ver no explorer</span>
+              {walletAddress ? (
+                <div className="flex items-center gap-3 rounded-lg bg-secondary/50 p-4">
+                  <div className="flex-1 font-mono text-sm text-card-foreground">
+                    <span className="hidden sm:inline">{walletAddress}</span>
+                    <span className="sm:hidden">{shortenAddress(walletAddress)}</span>
+                  </div>
+                  <Button variant="ghost" size="icon" onClick={() => copy(walletAddress)} className="shrink-0">
+                    {isCopied() ? <Check className="h-4 w-4 text-success" /> : <Copy className="h-4 w-4" />}
+                    <span className="sr-only">Copiar endereço</span>
                   </Button>
-                </a>
-              </div>
-              <Button variant="outline" onClick={() => setIsEditing(true)}>
-                Alterar Endereço
+                </div>
+              ) : (
+                <p className="text-sm text-muted-foreground">Nenhum endereço cadastrado.</p>
+              )}
+              <Button variant="outline" onClick={() => { setNewAddress(walletAddress ?? ''); setIsEditing(true) }}>
+                {walletAddress ? 'Alterar Endereço' : 'Adicionar Endereço'}
               </Button>
             </div>
           ) : (
@@ -91,29 +131,29 @@ export default function WalletPage() {
                 )}
               </div>
               <div className="flex gap-3">
-                <Button variant="outline" onClick={() => { setIsEditing(false); setNewAddress(''); setError('') }}>
+                <Button variant="outline" onClick={() => { setIsEditing(false); setNewAddress(''); setError('') }} disabled={isSaving}>
                   Cancelar
                 </Button>
-                <Button onClick={handleSaveAddress}>Salvar</Button>
+                <LoadingButton loading={isSaving} loadingText="Salvando..." onClick={handleSaveAddress}>
+                  Salvar
+                </LoadingButton>
               </div>
             </div>
           )}
         </CardContent>
       </Card>
 
-      <div className="grid gap-4 sm:grid-cols-1">
-        <Card className="border-border bg-card">
-          <CardHeader>
-            <CardTitle className="text-base text-card-foreground">Importante</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <ul className="space-y-2 text-sm text-muted-foreground">
-              <li>• Verifique o endereço antes de salvar</li>
-              <li>• Transações são irreversíveis</li>
-            </ul>
-          </CardContent>
-        </Card>
-      </div>
+      <Card className="border-border bg-card">
+        <CardHeader>
+          <CardTitle className="text-base text-card-foreground">Importante</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <ul className="space-y-2 text-sm text-muted-foreground">
+            <li>• Verifique o endereço antes de salvar</li>
+            <li>• Transações são irreversíveis</li>
+          </ul>
+        </CardContent>
+      </Card>
     </div>
   )
 }

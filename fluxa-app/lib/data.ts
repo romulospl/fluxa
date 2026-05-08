@@ -92,12 +92,31 @@ export function getExplorerUrl(txHash: string, network: string = 'ethereum'): st
 }
 
 export function validateWalletAddress(address: string): boolean {
-  // Validação básica para endereços Ethereum (0x...)
-  const ethRegex = /^0x[a-fA-F0-9]{40}$/
-  // Validação básica para endereços Bitcoin (começando com 1, 3 ou bc1)
-  const btcRegex = /^(1|3)[a-zA-HJ-NP-Z0-9]{25,34}$|^bc1[a-zA-HJ-NP-Z0-9]{39,59}$/
+  if (!address) return false
+  const addr = address.trim()
+
+  // Ethereum / EVM (0x...) - case insensitive
+  const ethRegex = /^0x[a-fA-F0-9]{40}$/i
   
-  return ethRegex.test(address) || btcRegex.test(address)
+  // Bitcoin (1, 3, bc1) - case insensitive bc1
+  const btcRegex = /^(1|3)[a-zA-HJ-NP-Z0-9]{25,34}$|^bc1[a-z0-9]{39,59}$/i
+  
+  // Stellar (G...)
+  const stellarRegex = /^G[A-Z2-7]{55}$/
+  
+  // Solana (Base58, 32-44 chars)
+  const solanaRegex = /^[1-9A-HJ-NP-Za-km-z]{32,44}$/
+  
+  // Tron (T...)
+  const tronRegex = /^T[a-zA-HJ-NP-Z0-9]{33}$/
+
+  return (
+    ethRegex.test(addr) ||
+    btcRegex.test(addr) ||
+    stellarRegex.test(addr) ||
+    solanaRegex.test(addr) ||
+    tronRegex.test(addr)
+  )
 }
 
 export function calculateCryptoAmount(brlAmount: number, cryptoPrice: number): number {
