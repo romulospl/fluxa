@@ -3,25 +3,15 @@
 import { useState, useEffect } from 'react'
 import { User, Shield, Save, MapPin, Loader2, Pencil, X } from 'lucide-react'
 import { PasswordInput } from '@/components/ui/password-input'
+import { LoadingButton } from '@/components/ui/loading-button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { toastSuccess, toastError } from '@/lib/toast'
-
-function formatCEP(value: string) {
-  const d = value.replace(/\D/g, '').slice(0, 8)
-  return d.replace(/^(\d{5})(\d)/, '$1-$2')
-}
-
-function formatCNPJ(value: string) {
-  const d = value.replace(/\D/g, '').slice(0, 14)
-  return d
-    .replace(/^(\d{2})(\d)/, '$1.$2')
-    .replace(/^(\d{2})\.(\d{3})(\d)/, '$1.$2.$3')
-    .replace(/\.(\d{3})(\d)/, '.$1/$2')
-    .replace(/(\d{4})(\d)/, '$1-$2')
-}
+import { formatCEP, formatCNPJ } from '@/lib/formatters'
+import { useCepLookup } from '@/hooks/use-cep-lookup'
+import { useApiMutation } from '@/hooks/use-api-mutation'
 
 type UserData = {
   id: string
@@ -45,10 +35,6 @@ export default function SettingsPage() {
   const [isLoadingUser, setIsLoadingUser] = useState(true)
   const [isEditing, setIsEditing] = useState(false)
 
-  const [isSavingProfile, setIsSavingProfile] = useState(false)
-  const [profileError, setProfileError] = useState<string | null>(null)
-  const [isSavingPassword, setIsSavingPassword] = useState(false)
-
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [cnpj, setCnpj] = useState('')
@@ -59,9 +45,7 @@ export default function SettingsPage() {
   const [neighborhood, setNeighborhood] = useState('')
   const [city, setCity] = useState('')
   const [state, setState] = useState('')
-  const [isFetchingCep, setIsFetchingCep] = useState(false)
 
-  // snapshot para restaurar ao cancelar edição
   const [snapshot, setSnapshot] = useState({
     name: '', email: '', zipCode: '', street: '', number: '',
     complement: '', neighborhood: '', city: '', state: '',
@@ -70,7 +54,21 @@ export default function SettingsPage() {
   const [currentPassword, setCurrentPassword] = useState('')
   const [newPassword, setNewPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
-  const [passwordError, setPasswordError] = useState<string | null>(null)
+
+  const {
+    execute: saveProfile,
+    isLoading: isSavingProfile,
+    error: profileError,
+  } = useApiMutation()
+
+  const {
+    execute: savePassword,
+    isLoading: isSavingPassword,
+    error: passwordError,
+    setError: setPasswordError,
+  } = useApiMutation()
+
+  const { lookup: lookupCep, isFetching: isFetchingCep } = useCepLookup()
 
   useEffect(() => {
     async function loadUser() {
@@ -125,31 +123,18 @@ export default function SettingsPage() {
     setIsEditing(false)
   }
 
-  const handleCepBlur = async () => {
-    const digits = zipCode.replace(/\D/g, '')
-    if (digits.length !== 8) return
-    setIsFetchingCep(true)
-    try {
-      const res = await fetch(`https://viacep.com.br/ws/${digits}/json/`)
-      const data = await res.json()
-      if (!data.erro) {
-        setStreet(data.logradouro || '')
-        setNeighborhood(data.bairro || '')
-        setCity(data.localidade || '')
-        setState(data.uf || '')
-      }
-    } catch {
-      // silently fail — user fills manually
-    } finally {
-      setIsFetchingCep(false)
-    }
+  const handleCepBlur = () => {
+    lookupCep(zipCode, (data) => {
+      setStreet(data.street)
+      setNeighborhood(data.neighborhood)
+      setCity(data.city)
+      setState(data.state)
+    })
   }
 
-  const handleSaveProfile = async (e: React.FormEvent) => {
+  const handleSaveProfile = (e: React.FormEvent) => {
     e.preventDefault()
-    setProfileError(null)
-    setIsSavingProfile(true)
-    try {
+    saveProfile(async () => {
       const res = await fetch('/api/users', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
@@ -159,23 +144,15 @@ export default function SettingsPage() {
           address: { zipCode: zipCode.replace(/\D/g, ''), street, number, complement: complement || null, neighborhood, city, state },
         }),
       })
-      if (!res.ok) {
-        const data = await res.json()
-        setProfileError(data.error || 'Erro ao salvar dados.')
-        return
-      }
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || 'Erro ao salvar dados.')
       setIsEditing(false)
       toastSuccess('Dados salvos com sucesso!')
-    } catch {
-      setProfileError('Erro de conexão. Tente novamente.')
-    } finally {
-      setIsSavingProfile(false)
-    }
+    })
   }
 
-  const handleSavePassword = async (e: React.FormEvent) => {
+  const handleSavePassword = (e: React.FormEvent) => {
     e.preventDefault()
-    setPasswordError(null)
     if (newPassword !== confirmPassword) {
       setPasswordError('As senhas não coincidem.')
       return
@@ -184,27 +161,19 @@ export default function SettingsPage() {
       setPasswordError('A nova senha deve ter pelo menos 8 caracteres.')
       return
     }
-    setIsSavingPassword(true)
-    try {
+    savePassword(async () => {
       const res = await fetch('/api/users/password', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ currentPassword, newPassword }),
       })
       const data = await res.json()
-      if (!res.ok) {
-        setPasswordError(data.error || 'Erro ao alterar senha.')
-        return
-      }
+      if (!res.ok) throw new Error(data.error || 'Erro ao alterar senha.')
       setCurrentPassword('')
       setNewPassword('')
       setConfirmPassword('')
       toastSuccess('Senha alterada com sucesso!')
-    } catch {
-      toastError('Erro de conexão. Tente novamente.')
-    } finally {
-      setIsSavingPassword(false)
-    }
+    })
   }
 
   if (isLoadingUser) {
@@ -222,7 +191,6 @@ export default function SettingsPage() {
         <p className="text-muted-foreground">Gerencie seus dados e segurança da conta</p>
       </div>
 
-      {/* Dados pessoais + endereço */}
       <form onSubmit={handleSaveProfile}>
         <Card className="border-border bg-card">
           <CardHeader className="flex flex-row items-start justify-between">
@@ -244,35 +212,15 @@ export default function SettingsPage() {
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-2">
                 <Label htmlFor="name">Nome Completo</Label>
-                <Input
-                  id="name"
-                  placeholder="Seu nome"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  disabled={!isEditing}
-                />
+                <Input id="name" placeholder="Seu nome" value={name} onChange={(e) => setName(e.target.value)} disabled={!isEditing} />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="email">E-mail</Label>
-                <Input
-                  id="email"
-                  type="email"
-                  placeholder="voce@exemplo.com"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  disabled={!isEditing}
-                />
+                <Input id="email" type="email" placeholder="voce@exemplo.com" value={email} onChange={(e) => setEmail(e.target.value)} disabled={!isEditing} />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="cnpj">CNPJ</Label>
-                <Input
-                  id="cnpj"
-                  placeholder="00.000.000/0000-00"
-                  className="font-mono"
-                  value={cnpj}
-                  disabled
-                  readOnly
-                />
+                <Input id="cnpj" placeholder="00.000.000/0000-00" className="font-mono" value={cnpj} disabled readOnly />
               </div>
             </div>
 
@@ -302,72 +250,34 @@ export default function SettingsPage() {
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="state">UF</Label>
-                    <Input
-                      id="state"
-                      placeholder="SP"
-                      className="text-center font-mono uppercase"
-                      maxLength={2}
-                      value={state}
-                      onChange={(e) => setState(e.target.value.toUpperCase())}
-                      disabled={!isEditing}
-                    />
+                    <Input id="state" placeholder="SP" className="text-center font-mono uppercase" maxLength={2} value={state} onChange={(e) => setState(e.target.value.toUpperCase())} disabled={!isEditing} />
                   </div>
                 </div>
 
                 <div className="space-y-2">
                   <Label htmlFor="street">Logradouro</Label>
-                  <Input
-                    id="street"
-                    placeholder="Rua, Avenida..."
-                    value={street}
-                    onChange={(e) => setStreet(e.target.value)}
-                    disabled={!isEditing}
-                  />
+                  <Input id="street" placeholder="Rua, Avenida..." value={street} onChange={(e) => setStreet(e.target.value)} disabled={!isEditing} />
                 </div>
 
                 <div className="grid grid-cols-2 gap-3">
                   <div className="space-y-2">
                     <Label htmlFor="number">Número</Label>
-                    <Input
-                      id="number"
-                      placeholder="123"
-                      value={number}
-                      onChange={(e) => setNumber(e.target.value)}
-                      disabled={!isEditing}
-                    />
+                    <Input id="number" placeholder="123" value={number} onChange={(e) => setNumber(e.target.value)} disabled={!isEditing} />
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="complement">Complemento</Label>
-                    <Input
-                      id="complement"
-                      placeholder="Apto, Sala..."
-                      value={complement}
-                      onChange={(e) => setComplement(e.target.value)}
-                      disabled={!isEditing}
-                    />
+                    <Input id="complement" placeholder="Apto, Sala..." value={complement} onChange={(e) => setComplement(e.target.value)} disabled={!isEditing} />
                   </div>
                 </div>
 
                 <div className="grid grid-cols-2 gap-3">
                   <div className="space-y-2">
                     <Label htmlFor="neighborhood">Bairro</Label>
-                    <Input
-                      id="neighborhood"
-                      placeholder="Centro"
-                      value={neighborhood}
-                      onChange={(e) => setNeighborhood(e.target.value)}
-                      disabled={!isEditing}
-                    />
+                    <Input id="neighborhood" placeholder="Centro" value={neighborhood} onChange={(e) => setNeighborhood(e.target.value)} disabled={!isEditing} />
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="city">Cidade</Label>
-                    <Input
-                      id="city"
-                      placeholder="São Paulo"
-                      value={city}
-                      onChange={(e) => setCity(e.target.value)}
-                      disabled={!isEditing}
-                    />
+                    <Input id="city" placeholder="São Paulo" value={city} onChange={(e) => setCity(e.target.value)} disabled={!isEditing} />
                   </div>
                 </div>
               </div>
@@ -385,25 +295,15 @@ export default function SettingsPage() {
                 <X className="h-4 w-4" />
                 Cancelar
               </Button>
-              <Button type="submit" className="gap-2" disabled={isSavingProfile}>
-                {isSavingProfile ? (
-                  <>
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                    Salvando...
-                  </>
-                ) : (
-                  <>
-                    <Save className="h-4 w-4" />
-                    Salvar Dados
-                  </>
-                )}
-              </Button>
+              <LoadingButton type="submit" className="gap-2" loading={isSavingProfile} loadingText="Salvando...">
+                <Save className="h-4 w-4" />
+                Salvar Dados
+              </LoadingButton>
             </div>
           </div>
         )}
       </form>
 
-      {/* Segurança */}
       <form onSubmit={handleSavePassword}>
         <Card className="border-border bg-card">
           <CardHeader>
@@ -419,51 +319,24 @@ export default function SettingsPage() {
             )}
             <div className="space-y-2">
               <Label htmlFor="currentPassword">Senha Atual</Label>
-              <PasswordInput
-                id="currentPassword"
-                placeholder="••••••••"
-                value={currentPassword}
-                onChange={(e) => setCurrentPassword(e.target.value)}
-                required
-              />
+              <PasswordInput id="currentPassword" placeholder="••••••••" value={currentPassword} onChange={(e) => setCurrentPassword(e.target.value)} required />
             </div>
             <div className="space-y-2">
               <Label htmlFor="newPassword">Nova Senha</Label>
-              <PasswordInput
-                id="newPassword"
-                placeholder="••••••••"
-                value={newPassword}
-                onChange={(e) => setNewPassword(e.target.value)}
-                required
-              />
+              <PasswordInput id="newPassword" placeholder="••••••••" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} required />
             </div>
             <div className="space-y-2">
               <Label htmlFor="confirmPassword">Confirmar Nova Senha</Label>
-              <PasswordInput
-                id="confirmPassword"
-                placeholder="••••••••"
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                required
-              />
+              <PasswordInput id="confirmPassword" placeholder="••••••••" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} required />
             </div>
           </CardContent>
         </Card>
 
         <div className="mt-4 flex justify-end">
-          <Button type="submit" className="gap-2" disabled={isSavingPassword}>
-            {isSavingPassword ? (
-              <>
-                <Loader2 className="h-4 w-4 animate-spin" />
-                Salvando...
-              </>
-            ) : (
-              <>
-                <Save className="h-4 w-4" />
-                Alterar Senha
-              </>
-            )}
-          </Button>
+          <LoadingButton type="submit" className="gap-2" loading={isSavingPassword} loadingText="Salvando...">
+            <Save className="h-4 w-4" />
+            Alterar Senha
+          </LoadingButton>
         </div>
       </form>
     </div>

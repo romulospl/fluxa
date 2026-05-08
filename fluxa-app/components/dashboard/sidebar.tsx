@@ -4,26 +4,11 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useTheme } from 'next-themes'
-import {
-  LayoutDashboard,
-  Receipt,
-  Wallet,
-  Settings,
-  Sun,
-  Moon,
-  Zap,
-  LogOut
-} from 'lucide-react'
+import { Sun, Moon, Zap, LogOut } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { LogoutDialog } from '@/components/dashboard/logout-dialog'
-
-const navItems = [
-  { href: '/dashboard', label: 'Visão Geral', icon: LayoutDashboard },
-  { href: '/dashboard/charges', label: 'Cobranças', icon: Receipt },
-  { href: '/dashboard/wallet', label: 'Carteira', icon: Wallet },
-  { href: '/dashboard/settings', label: 'Configurações', icon: Settings },
-]
+import { navItems } from '@/lib/nav'
 
 export function Sidebar() {
   const pathname = usePathname()
@@ -37,7 +22,6 @@ export function Sidebar() {
     <>
       <aside className="fixed left-0 top-0 z-40 h-screen w-64 border-r border-border bg-sidebar">
         <div className="flex h-full flex-col">
-          {/* Logo */}
           <div className="flex h-16 items-center gap-2 border-b border-sidebar-border px-6">
             <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary">
               <Zap className="h-5 w-5 text-primary-foreground" />
@@ -45,7 +29,6 @@ export function Sidebar() {
             <span className="text-xl font-semibold text-sidebar-foreground">Fluxa</span>
           </div>
 
-          {/* Navigation */}
           <nav className="flex-1 space-y-1 p-4">
             {navItems.map((item) => {
               const isActive = pathname === item.href ||
@@ -69,7 +52,6 @@ export function Sidebar() {
             })}
           </nav>
 
-          {/* Footer: Theme Toggle + Logout */}
           <div className="border-t border-sidebar-border p-4 space-y-1">
             <Button
               variant="ghost"
@@ -78,15 +60,9 @@ export function Sidebar() {
               className="w-full justify-start gap-3 text-sidebar-foreground/70 hover:text-sidebar-foreground"
             >
               {mounted && theme === 'dark' ? (
-                <>
-                  <Sun className="h-5 w-5" />
-                  Modo Claro
-                </>
+                <><Sun className="h-5 w-5" />Modo Claro</>
               ) : (
-                <>
-                  <Moon className="h-5 w-5" />
-                  Modo Escuro
-                </>
+                <><Moon className="h-5 w-5" />Modo Escuro</>
               )}
             </Button>
             <Button

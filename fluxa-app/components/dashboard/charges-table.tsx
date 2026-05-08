@@ -1,12 +1,12 @@
 'use client'
 
 import { ExternalLink, Copy, Check } from 'lucide-react'
-import { useState } from 'react'
 import { Charge, STATUS_CONFIG } from '@/lib/types'
 import { formatBRL, formatCrypto, formatDate, shortenHash, getExplorerUrl } from '@/lib/data'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
+import { useCopyToClipboard } from '@/hooks/use-copy-to-clipboard'
 
 interface ChargesTableProps {
   charges: Charge[]
@@ -14,13 +14,7 @@ interface ChargesTableProps {
 }
 
 export function ChargesTable({ charges, onViewCharge }: ChargesTableProps) {
-  const [copiedId, setCopiedId] = useState<string | null>(null)
-
-  const copyToClipboard = async (text: string, id: string) => {
-    await navigator.clipboard.writeText(text)
-    setCopiedId(id)
-    setTimeout(() => setCopiedId(null), 2000)
-  }
+  const { copy, isCopied } = useCopyToClipboard()
 
   return (
     <Card className="border-border bg-card">
@@ -43,35 +37,25 @@ export function ChargesTable({ charges, onViewCharge }: ChargesTableProps) {
             <tbody>
               {charges.map((charge) => {
                 const statusConfig = STATUS_CONFIG[charge.status]
-                
+
                 return (
-                  <tr 
-                    key={charge.id} 
-                    className="border-b border-border/50 last:border-0"
-                  >
+                  <tr key={charge.id} className="border-b border-border/50 last:border-0">
                     <td className="py-4 pr-4">
-                      <div className="font-medium text-card-foreground">
-                        {charge.description}
-                      </div>
+                      <div className="font-medium text-card-foreground">{charge.description}</div>
                       {charge.txHash && (
                         <div className="mt-1 flex items-center gap-1 text-xs text-muted-foreground">
                           <span className="font-mono">{shortenHash(charge.txHash)}</span>
                           <button
-                            onClick={() => copyToClipboard(charge.txHash!, charge.id)}
+                            onClick={() => copy(charge.txHash!, charge.id)}
                             className="p-0.5 hover:text-foreground"
                           >
-                            {copiedId === charge.id ? (
+                            {isCopied(charge.id) ? (
                               <Check className="h-3 w-3 text-success" />
                             ) : (
                               <Copy className="h-3 w-3" />
                             )}
                           </button>
-                          <a
-                            href={getExplorerUrl(charge.txHash)}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="p-0.5 hover:text-primary"
-                          >
+                          <a href={getExplorerUrl(charge.txHash)} target="_blank" rel="noopener noreferrer" className="p-0.5 hover:text-primary">
                             <ExternalLink className="h-3 w-3" />
                           </a>
                         </div>

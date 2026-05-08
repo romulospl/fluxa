@@ -1,12 +1,18 @@
 'use client'
 
 import { useState, useMemo } from 'react'
-import { X, AlertCircle } from 'lucide-react'
+import { AlertCircle } from 'lucide-react'
 import { CRYPTO_ASSETS } from '@/lib/types'
 import { mockQuotes, formatBRL, calculateCryptoAmount } from '@/lib/data'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
 import {
   Select,
   SelectContent,
@@ -30,10 +36,10 @@ export function NewChargeModal({ open, onClose, onSubmit }: NewChargeModalProps)
   const estimatedCrypto = useMemo(() => {
     const numAmount = parseFloat(amount.replace(/\D/g, '')) / 100
     if (!numAmount || isNaN(numAmount)) return null
-    
+
     const quote = mockQuotes.find(q => q.symbol === selectedAsset)
     if (!quote) return null
-    
+
     return calculateCryptoAmount(numAmount, quote.priceInBRL)
   }, [amount, selectedAsset])
 
@@ -51,14 +57,14 @@ export function NewChargeModal({ open, onClose, onSubmit }: NewChargeModalProps)
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    
+
     const numAmount = parseFloat(amount.replace(/\./g, '').replace(',', '.'))
-    
+
     if (!numAmount || numAmount < 10) {
       setError('O valor mínimo é R$ 10,00')
       return
     }
-    
+
     if (!description.trim()) {
       setError('Informe uma descrição')
       return
@@ -70,36 +76,20 @@ export function NewChargeModal({ open, onClose, onSubmit }: NewChargeModalProps)
       cryptoAsset: selectedAsset,
     })
 
-    // Reset form
     setAmount('')
     setDescription('')
     setSelectedAsset('BTC')
     setError('')
   }
 
-  if (!open) return null
-
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      {/* Backdrop */}
-      <div 
-        className="fixed inset-0 bg-background/80 backdrop-blur-sm"
-        onClick={onClose}
-      />
-      
-      {/* Modal */}
-      <div className="relative w-full max-w-md rounded-xl border border-border bg-card p-6 shadow-lg">
-        {/* Header */}
-        <div className="mb-6 flex items-center justify-between">
-          <h2 className="text-lg font-semibold text-card-foreground">Nova Cobrança</h2>
-          <Button variant="ghost" size="icon" onClick={onClose}>
-            <X className="h-4 w-4" />
-            <span className="sr-only">Fechar</span>
-          </Button>
-        </div>
+    <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle>Nova Cobrança</DialogTitle>
+        </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          {/* Amount Input */}
           <div className="space-y-2">
             <Label htmlFor="amount">Valor (BRL)</Label>
             <div className="relative">
@@ -117,7 +107,6 @@ export function NewChargeModal({ open, onClose, onSubmit }: NewChargeModalProps)
             </div>
           </div>
 
-          {/* Description Input */}
           <div className="space-y-2">
             <Label htmlFor="description">Descrição</Label>
             <Input
@@ -132,7 +121,6 @@ export function NewChargeModal({ open, onClose, onSubmit }: NewChargeModalProps)
             />
           </div>
 
-          {/* Crypto Asset Selection */}
           <div className="space-y-2">
             <Label htmlFor="crypto">Receber em</Label>
             <Select value={selectedAsset} onValueChange={setSelectedAsset}>
@@ -153,7 +141,6 @@ export function NewChargeModal({ open, onClose, onSubmit }: NewChargeModalProps)
             </Select>
           </div>
 
-          {/* Estimate */}
           {estimatedCrypto && selectedQuote && (
             <div className="rounded-lg bg-secondary/50 p-4">
               <div className="text-sm text-muted-foreground">Estimativa de recebimento</div>
@@ -166,7 +153,6 @@ export function NewChargeModal({ open, onClose, onSubmit }: NewChargeModalProps)
             </div>
           )}
 
-          {/* Error */}
           {error && (
             <div className="flex items-center gap-2 text-sm text-destructive">
               <AlertCircle className="h-4 w-4" />
@@ -174,7 +160,6 @@ export function NewChargeModal({ open, onClose, onSubmit }: NewChargeModalProps)
             </div>
           )}
 
-          {/* Actions */}
           <div className="flex gap-3 pt-2">
             <Button type="button" variant="outline" onClick={onClose} className="flex-1">
               Cancelar
@@ -184,7 +169,7 @@ export function NewChargeModal({ open, onClose, onSubmit }: NewChargeModalProps)
             </Button>
           </div>
         </form>
-      </div>
-    </div>
+      </DialogContent>
+    </Dialog>
   )
 }

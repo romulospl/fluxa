@@ -3,55 +3,37 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { Zap, Loader2, Mail, AlertCircle } from 'lucide-react'
+import { Zap, Mail, AlertCircle } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
 import { PasswordInput } from '@/components/ui/password-input'
+import { InputWithIcon } from '@/components/ui/input-with-icon'
+import { LoadingButton } from '@/components/ui/loading-button'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { useAuth } from '@/hooks/use-auth'
+import { useApiMutation } from '@/hooks/use-api-mutation'
 
 export default function LoginPage() {
   const router = useRouter()
   const { setAuth } = useAuth()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
-  const [isLoading, setIsLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
+  const { execute, isLoading, error } = useApiMutation()
 
-  const handleLogin = async (e: React.FormEvent) => {
+  const handleLogin = (e: React.FormEvent) => {
     e.preventDefault()
-    setIsLoading(true)
-    setError(null)
-
-    try {
+    execute(async () => {
       const response = await fetch('/api/login', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password }),
       })
-
       const data = await response.json()
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Erro ao realizar login')
-      }
-
-      // Salva os dados no store global (Zustand com persistência)
-      if (data.token && data.user) {
-        setAuth(data.user, data.token)
-      }
-
-      // Sucesso no login
+      if (!response.ok) throw new Error(data.error || 'Erro ao realizar login')
+      if (data.token && data.user) setAuth(data.user, data.token)
       router.push('/dashboard')
-    } catch (err: any) {
-      setError(err.message || 'Ocorreu um erro inesperado. Tente novamente.')
-    } finally {
-      setIsLoading(false)
-    }
+    })
   }
 
   return (
@@ -75,9 +57,7 @@ export default function LoginPage() {
         <Card className="border-border/50 bg-card/50 backdrop-blur-sm">
           <CardHeader className="space-y-1">
             <CardTitle className="text-xl">Login</CardTitle>
-            <CardDescription>
-              Use suas credenciais para acessar o painel
-            </CardDescription>
+            <CardDescription>Use suas credenciais para acessar o painel</CardDescription>
           </CardHeader>
           <form onSubmit={handleLogin}>
             <CardContent className="space-y-4">
@@ -87,31 +67,25 @@ export default function LoginPage() {
                   <AlertDescription>{error}</AlertDescription>
                 </Alert>
               )}
-              
+
               <div className="space-y-2">
                 <Label htmlFor="email">E-mail</Label>
-                <div className="relative">
-                  <Mail className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    id="email"
-                    type="email"
-                    placeholder="admin@gmail.com"
-                    className="pl-10"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    required
-                    disabled={isLoading}
-                  />
-                </div>
+                <InputWithIcon
+                  icon={<Mail />}
+                  id="email"
+                  type="email"
+                  placeholder="admin@gmail.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                  disabled={isLoading}
+                />
               </div>
-              
+
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
                   <Label htmlFor="password">Senha</Label>
-                  <Link
-                    href="/forgot-password"
-                    className="text-xs text-primary hover:underline"
-                  >
+                  <Link href="/forgot-password" className="text-xs text-primary hover:underline">
                     Esqueceu a senha?
                   </Link>
                 </div>
@@ -126,20 +100,14 @@ export default function LoginPage() {
               </div>
             </CardContent>
             <CardFooter className="flex flex-col space-y-4 pt-6">
-              <Button
+              <LoadingButton
                 type="submit"
                 className="w-full font-semibold"
-                disabled={isLoading}
+                loading={isLoading}
+                loadingText="Entrando..."
               >
-                {isLoading ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Entrando...
-                  </>
-                ) : (
-                  'Entrar'
-                )}
-              </Button>
+                Entrar
+              </LoadingButton>
               <p className="text-center text-sm text-muted-foreground">
                 Não tem uma conta?{' '}
                 <Link href="/register" className="font-medium text-primary hover:underline">

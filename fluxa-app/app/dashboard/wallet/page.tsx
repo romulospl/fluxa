@@ -7,19 +7,14 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { validateWalletAddress } from '@/lib/data'
+import { useCopyToClipboard } from '@/hooks/use-copy-to-clipboard'
 
 export default function WalletPage() {
   const [walletAddress, setWalletAddress] = useState('0x742d35Cc6634C0532925a3b844Bc9e7595f00000')
   const [isEditing, setIsEditing] = useState(false)
   const [newAddress, setNewAddress] = useState('')
-  const [copied, setCopied] = useState(false)
   const [error, setError] = useState('')
-
-  const copyAddress = async () => {
-    await navigator.clipboard.writeText(walletAddress)
-    setCopied(true)
-    setTimeout(() => setCopied(false), 2000)
-  }
+  const { copy, isCopied } = useCopyToClipboard()
 
   const handleSaveAddress = () => {
     if (!validateWalletAddress(newAddress)) {
@@ -32,13 +27,11 @@ export default function WalletPage() {
     setError('')
   }
 
-  const shortenAddress = (address: string) => {
-    return `${address.slice(0, 10)}...${address.slice(-8)}`
-  }
+  const shortenAddress = (address: string) =>
+    `${address.slice(0, 10)}...${address.slice(-8)}`
 
   return (
     <div className="space-y-6">
-      {/* Header */}
       <div>
         <h1 className="text-2xl font-bold text-foreground">Carteira Digital</h1>
         <p className="text-muted-foreground">
@@ -46,7 +39,6 @@ export default function WalletPage() {
         </p>
       </div>
 
-      {/* Current Wallet */}
       <Card className="border-border bg-card">
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-card-foreground">
@@ -65,25 +57,11 @@ export default function WalletPage() {
                   <span className="hidden sm:inline">{walletAddress}</span>
                   <span className="sm:hidden">{shortenAddress(walletAddress)}</span>
                 </div>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={copyAddress}
-                  className="shrink-0"
-                >
-                  {copied ? (
-                    <Check className="h-4 w-4 text-success" />
-                  ) : (
-                    <Copy className="h-4 w-4" />
-                  )}
+                <Button variant="ghost" size="icon" onClick={() => copy(walletAddress)} className="shrink-0">
+                  {isCopied() ? <Check className="h-4 w-4 text-success" /> : <Copy className="h-4 w-4" />}
                   <span className="sr-only">Copiar endereço</span>
                 </Button>
-                <a
-                  href={`https://etherscan.io/address/${walletAddress}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="shrink-0"
-                >
+                <a href={`https://etherscan.io/address/${walletAddress}`} target="_blank" rel="noopener noreferrer" className="shrink-0">
                   <Button variant="ghost" size="icon">
                     <ExternalLink className="h-4 w-4" />
                     <span className="sr-only">Ver no explorer</span>
@@ -102,10 +80,7 @@ export default function WalletPage() {
                   id="newAddress"
                   placeholder="0x... endereço da carteira"
                   value={newAddress}
-                  onChange={(e) => {
-                    setNewAddress(e.target.value)
-                    setError('')
-                  }}
+                  onChange={(e) => { setNewAddress(e.target.value); setError('') }}
                   className="font-mono"
                 />
                 {error && (
@@ -116,14 +91,7 @@ export default function WalletPage() {
                 )}
               </div>
               <div className="flex gap-3">
-                <Button
-                  variant="outline"
-                  onClick={() => {
-                    setIsEditing(false)
-                    setNewAddress('')
-                    setError('')
-                  }}
-                >
+                <Button variant="outline" onClick={() => { setIsEditing(false); setNewAddress(''); setError('') }}>
                   Cancelar
                 </Button>
                 <Button onClick={handleSaveAddress}>Salvar</Button>
@@ -133,30 +101,7 @@ export default function WalletPage() {
         </CardContent>
       </Card>
 
-      {/* Info Cards */}
       <div className="grid gap-4 sm:grid-cols-1">
-        {/* <Card className="border-border bg-card">
-          <CardHeader>
-            <CardTitle className="text-base text-card-foreground">Redes Suportadas</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <ul className="space-y-2 text-sm text-muted-foreground">
-              <li className="flex items-center gap-2">
-                <div className="h-2 w-2 rounded-full bg-primary" />
-                Ethereum (ETH, USDT, USDC)
-              </li>
-              <li className="flex items-center gap-2">
-                <div className="h-2 w-2 rounded-full bg-chart-2" />
-                Bitcoin (BTC)
-              </li>
-              <li className="flex items-center gap-2">
-                <div className="h-2 w-2 rounded-full bg-chart-3" />
-                Polygon (MATIC, USDT)
-              </li>
-            </ul>
-          </CardContent>
-        </Card> */}
-
         <Card className="border-border bg-card">
           <CardHeader>
             <CardTitle className="text-base text-card-foreground">Importante</CardTitle>
@@ -164,7 +109,6 @@ export default function WalletPage() {
           <CardContent>
             <ul className="space-y-2 text-sm text-muted-foreground">
               <li>• Verifique o endereço antes de salvar</li>
-              {/* <li>• Use sempre a rede correta</li> */}
               <li>• Transações são irreversíveis</li>
             </ul>
           </CardContent>

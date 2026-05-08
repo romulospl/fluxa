@@ -3,17 +3,11 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { X, LayoutDashboard, Receipt, Wallet, Settings, Zap, LogOut } from 'lucide-react'
+import { X, Zap, LogOut } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { LogoutDialog } from '@/components/dashboard/logout-dialog'
-
-const navItems = [
-  { href: '/dashboard', label: 'Visão Geral', icon: LayoutDashboard },
-  { href: '/dashboard/charges', label: 'Cobranças', icon: Receipt },
-  { href: '/dashboard/wallet', label: 'Carteira', icon: Wallet },
-  { href: '/dashboard/settings', label: 'Configurações', icon: Settings },
-]
+import { navItems } from '@/lib/nav'
 
 interface MobileNavProps {
   open: boolean
@@ -27,7 +21,6 @@ export function MobileNav({ open, onClose }: MobileNavProps) {
   return (
     <>
       <div className={cn('fixed inset-0 z-50 lg:hidden', !open && 'pointer-events-none')}>
-        {/* Backdrop */}
         <div
           className={cn(
             'fixed inset-0 bg-background/80 backdrop-blur-sm transition-opacity duration-300',
@@ -36,13 +29,11 @@ export function MobileNav({ open, onClose }: MobileNavProps) {
           onClick={onClose}
         />
 
-        {/* Drawer */}
         <div className={cn(
           'fixed inset-y-0 left-0 w-72 bg-sidebar border-r border-sidebar-border shadow-lg transition-transform duration-300 ease-in-out',
           open ? 'translate-x-0' : '-translate-x-full'
         )}>
           <div className="flex h-full flex-col">
-            {/* Header */}
             <div className="flex h-16 items-center justify-between border-b border-sidebar-border px-4">
               <div className="flex items-center gap-2">
                 <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary">
@@ -56,7 +47,6 @@ export function MobileNav({ open, onClose }: MobileNavProps) {
               </Button>
             </div>
 
-            {/* Navigation */}
             <nav className="flex-1 space-y-1 p-4">
               {navItems.map((item) => {
                 const isActive = pathname === item.href ||
@@ -81,7 +71,6 @@ export function MobileNav({ open, onClose }: MobileNavProps) {
               })}
             </nav>
 
-            {/* Logout */}
             <div className="border-t border-sidebar-border p-4">
               <Button
                 variant="ghost"
