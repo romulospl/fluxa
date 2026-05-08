@@ -184,6 +184,17 @@ export async function changePassword(
   await db.user.update({ where: { id: user.id }, data: { password: hashed } })
 }
 
+export async function updateWalletAddress(token: string, walletAddress: string) {
+  const decoded = await verifyToken(token)
+
+  const user = await db.user.update({
+    where: { id: decoded.userId },
+    data: { walletAddress },
+  })
+
+  return { walletAddress: user.walletAddress }
+}
+
 export async function getUserFromToken(token: string) {
   const decoded = await verifyToken(token)
 
