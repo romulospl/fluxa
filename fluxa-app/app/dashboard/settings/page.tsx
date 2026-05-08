@@ -6,6 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { toastSuccess } from '@/lib/toast'
 
 function formatCEP(value: string) {
   const d = value.replace(/\D/g, '').slice(0, 8)
@@ -35,7 +36,6 @@ export default function SettingsPage() {
   const [isEditing, setIsEditing] = useState(false)
 
   const [isSavingProfile, setIsSavingProfile] = useState(false)
-  const [profileSaved, setProfileSaved] = useState(false)
   const [profileError, setProfileError] = useState<string | null>(null)
   const [passwordSaved, setPasswordSaved] = useState(false)
 
@@ -153,8 +153,7 @@ export default function SettingsPage() {
         return
       }
       setIsEditing(false)
-      setProfileSaved(true)
-      setTimeout(() => setProfileSaved(false), 2000)
+      toastSuccess('Dados salvos com sucesso!')
     } catch {
       setProfileError('Erro de conexão. Tente novamente.')
     } finally {
@@ -352,11 +351,6 @@ export default function SettingsPage() {
                   <>
                     <Loader2 className="h-4 w-4 animate-spin" />
                     Salvando...
-                  </>
-                ) : profileSaved ? (
-                  <>
-                    <Check className="h-4 w-4" />
-                    Salvo!
                   </>
                 ) : (
                   <>
