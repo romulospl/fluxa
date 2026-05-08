@@ -45,11 +45,6 @@ export default function HomePage() {
                 <ArrowRight className="h-4 w-4" />
               </Button>
             </Link>
-            <Link href="/dashboard">
-              <Button variant="outline" size="lg">
-                Ver Demo
-              </Button>
-            </Link>
           </div>
         </div>
       </section>
@@ -137,11 +132,11 @@ export default function HomePage() {
                   </div>
                   <div className="flex justify-between text-sm">
                     <span className="text-muted-foreground">Convertido</span>
-                    <span className="font-medium text-primary">0.00820000 BTC</span>
+                    <span className="font-medium text-primary">6157,77 XLM</span>
                   </div>
                   <div className="flex justify-between text-sm">
                     <span className="text-muted-foreground">TX Hash</span>
-                    <span className="font-mono text-xs text-card-foreground">0x8f4e...2f1</span>
+                    <span className="font-mono text-xs text-card-foreground">GBSP...F7OF</span>
                   </div>
                 </div>
               </div>
@@ -179,7 +174,7 @@ export default function HomePage() {
               <span className="font-semibold text-foreground">Fluxa</span>
             </div>
             <div className="text-sm text-muted-foreground">
-              © 2024 Fluxa. Todos os direitos reservados.
+              © 2026 Fluxa. Todos os direitos reservados.
             </div>
           </div>
         </div>
