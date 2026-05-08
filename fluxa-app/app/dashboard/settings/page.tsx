@@ -64,7 +64,7 @@ export default function SettingsPage() {
   useEffect(() => {
     async function loadUser() {
       try {
-        const res = await fetch('/api/user')
+        const res = await fetch('/api/user/current')
         if (!res.ok) return
         const data: UserData = await res.json()
         const fields = {
