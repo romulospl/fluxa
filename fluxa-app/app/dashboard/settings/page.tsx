@@ -1,12 +1,12 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { User, Shield, Save, Check, MapPin, Lock, Loader2, Pencil, X } from 'lucide-react'
+import { User, Shield, Save, MapPin, Lock, Loader2, Pencil, X } from 'lucide-react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { toastSuccess } from '@/lib/toast'
+import { toastSuccess, toastError } from '@/lib/toast'
 
 function formatCEP(value: string) {
   const d = value.replace(/\D/g, '').slice(0, 8)
@@ -46,7 +46,7 @@ export default function SettingsPage() {
 
   const [isSavingProfile, setIsSavingProfile] = useState(false)
   const [profileError, setProfileError] = useState<string | null>(null)
-  const [passwordSaved, setPasswordSaved] = useState(false)
+  const [isSavingPassword, setIsSavingPassword] = useState(false)
 
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
@@ -172,7 +172,7 @@ export default function SettingsPage() {
     }
   }
 
-  const handleSavePassword = (e: React.FormEvent) => {
+  const handleSavePassword = async (e: React.FormEvent) => {
     e.preventDefault()
     setPasswordError(null)
     if (newPassword !== confirmPassword) {
@@ -183,11 +183,27 @@ export default function SettingsPage() {
       setPasswordError('A nova senha deve ter pelo menos 8 caracteres.')
       return
     }
-    setPasswordSaved(true)
-    setCurrentPassword('')
-    setNewPassword('')
-    setConfirmPassword('')
-    setTimeout(() => setPasswordSaved(false), 2000)
+    setIsSavingPassword(true)
+    try {
+      const res = await fetch('/api/user/password', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ currentPassword, newPassword }),
+      })
+      const data = await res.json()
+      if (!res.ok) {
+        setPasswordError(data.error || 'Erro ao alterar senha.')
+        return
+      }
+      setCurrentPassword('')
+      setNewPassword('')
+      setConfirmPassword('')
+      toastSuccess('Senha alterada com sucesso!')
+    } catch {
+      toastError('Erro de conexão. Tente novamente.')
+    } finally {
+      setIsSavingPassword(false)
+    }
   }
 
   if (isLoadingUser) {
@@ -449,11 +465,11 @@ export default function SettingsPage() {
         </Card>
 
         <div className="mt-4 flex justify-end">
-          <Button type="submit" className="gap-2">
-            {passwordSaved ? (
+          <Button type="submit" className="gap-2" disabled={isSavingPassword}>
+            {isSavingPassword ? (
               <>
-                <Check className="h-4 w-4" />
-                Senha Alterada!
+                <Loader2 className="h-4 w-4 animate-spin" />
+                Salvando...
               </>
             ) : (
               <>
