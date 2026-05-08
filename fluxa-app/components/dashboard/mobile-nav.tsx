@@ -24,19 +24,23 @@ export function MobileNav({ open, onClose }: MobileNavProps) {
   const pathname = usePathname()
   const [logoutOpen, setLogoutOpen] = useState(false)
 
-  if (!open) return null
-
   return (
     <>
-      <div className="fixed inset-0 z-50 lg:hidden">
+      <div className={cn('fixed inset-0 z-50 lg:hidden', !open && 'pointer-events-none')}>
         {/* Backdrop */}
         <div
-          className="fixed inset-0 bg-background/80 backdrop-blur-sm"
+          className={cn(
+            'fixed inset-0 bg-background/80 backdrop-blur-sm transition-opacity duration-300',
+            open ? 'opacity-100' : 'opacity-0 pointer-events-none'
+          )}
           onClick={onClose}
         />
 
         {/* Drawer */}
-        <div className="fixed inset-y-0 left-0 w-72 bg-sidebar border-r border-sidebar-border shadow-lg">
+        <div className={cn(
+          'fixed inset-y-0 left-0 w-72 bg-sidebar border-r border-sidebar-border shadow-lg transition-transform duration-300 ease-in-out',
+          open ? 'translate-x-0' : '-translate-x-full'
+        )}>
           <div className="flex h-full flex-col">
             {/* Header */}
             <div className="flex h-16 items-center justify-between border-b border-sidebar-border px-4">
