@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { Zap, Loader2, Mail, Lock, User, AlertCircle, CheckCircle2 } from 'lucide-react'
+import { Zap, Loader2, Mail, Lock, User, Wallet, AlertCircle, CheckCircle2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -15,6 +15,7 @@ export default function RegisterPage() {
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [walletAddress, setWalletAddress] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState(false)
@@ -30,7 +31,7 @@ export default function RegisterPage() {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ name, email, password }),
+        body: JSON.stringify({ name, email, password, walletAddress }),
       })
 
       const data = await response.json()
@@ -135,6 +136,22 @@ export default function RegisterPage() {
                     className="pl-10"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
+                    required
+                    disabled={isLoading || success}
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="walletAddress">Endereço da Carteira</Label>
+                <div className="relative">
+                  <Wallet className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    id="walletAddress"
+                    placeholder="0x... ou endereço Solana"
+                    className="pl-10 font-mono text-sm"
+                    value={walletAddress}
+                    onChange={(e) => setWalletAddress(e.target.value)}
                     required
                     disabled={isLoading || success}
                   />
