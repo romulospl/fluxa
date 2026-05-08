@@ -72,3 +72,32 @@ export async function loginUser({ email, password }: any) {
     token
   }
 }
+
+export async function verifyToken(token: string) {
+  const secret = process.env.JWT_SECRET || 'fallback-secret'
+  try {
+    return jwt.verify(token, secret) as { userId: string; email: string }
+  } catch (error) {
+    throw new Error('Token inválido ou expirado')
+  }
+}
+
+export async function getUserFromToken(token: string) {
+  const decoded = await verifyToken(token)
+  
+  const user = await db.user.findUnique({
+    where: { id: decoded.userId }
+  })
+
+  if (!user) {
+    throw new Error('Usuário não encontrado')
+  }
+
+  return {
+    id: user.id,
+    email: user.email,
+    name: user.name,
+    walletAddress: user.walletAddress,
+    createdAt: user.createdAt
+  }
+}
