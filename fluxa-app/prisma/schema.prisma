@@ -52,7 +52,7 @@ model Charge {
   user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   description   String
   amountBrl     Decimal   @map("amount_brl") @db.Decimal(15, 2)
-  asaasId       String?   @unique @map("asaas_id")
+  externalId    String?   @unique @map("external_id")
   status        String
   paymentMethod String?   @map("payment_method")
   createdAt     DateTime  @default(now()) @map("created_at")

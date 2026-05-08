@@ -1,5 +1,41 @@
 import { db } from '@/lib/db'
 import { verifyToken } from '@/lib/services/auth'
+export async function createCharge(
+  token: string,
+  {
+    description,
+    amountBrl,
+    paymentMethod,
+  }: {
+    description: string
+    amountBrl: number
+    paymentMethod?: string
+  }
+) {
+  const decoded = await verifyToken(token)
+
+  const charge = await db.charge.create({
+    data: {
+      userId: decoded.userId,
+      description,
+      amountBrl,
+      status: 'pending',
+      paymentMethod: paymentMethod ?? null,
+    },
+    select: {
+      id: true,
+      description: true,
+      amountBrl: true,
+      externalId: true,
+      status: true,
+      paymentMethod: true,
+      createdAt: true,
+      paidAt: true,
+    },
+  })
+
+  return charge
+}
 
 export async function listCharges(
   token: string,
@@ -19,7 +55,7 @@ export async function listCharges(
         id: true,
         description: true,
         amountBrl: true,
-        asaasId: true,
+        externalId: true,
         status: true,
         paymentMethod: true,
         createdAt: true,

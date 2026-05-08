@@ -1,12 +1,25 @@
 import { NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
-import { listCharges } from '@/lib/services/charges'
+import { listCharges, createCharge } from '@/lib/services/charges'
 
 async function resolveToken(request: Request): Promise<string | null> {
   const authHeader = request.headers.get('Authorization')
-  if (authHeader?.startsWith('Bearer ')) return authHeader.substring(7)
+  if (authHeader?.startsWith('Bearer ')) {
+    const token = authHeader.substring(7)
+    if (token) {
+      console.log('Token resolvido via Authorization Header')
+      return token
+    }
+  }
+
   const cookieStore = await cookies()
-  return cookieStore.get('fluxa-token')?.value || null
+  const token = cookieStore.get('fluxa-token')?.value || null
+  if (token) {
+    console.log('Token resolvido via Cookie (fluxa-token)')
+  } else {
+    console.log('Nenhum token encontrado (Header ou Cookie)')
+  }
+  return token
 }
 
 /**
@@ -52,7 +65,7 @@ async function resolveToken(request: Request): Promise<string | null> {
  *                         type: string
  *                       amountBrl:
  *                         type: number
- *                       asaasId:
+ *                       externalId:
  *                         type: string
  *                         nullable: true
  *                       status:
@@ -80,6 +93,110 @@ async function resolveToken(request: Request): Promise<string | null> {
  *       500:
  *         description: Erro interno do servidor
  */
+/**
+ * @swagger
+ * /api/charges:
+ *   post:
+ *     tags:
+ *       - Cobrança
+ *     summary: Cria uma nova cobrança
+ *     description: Cria uma cobrança com status inicial "pending" vinculada ao usuário autenticado.
+ *     security:
+ *       - BearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - description
+ *               - amountBrl
+ *             properties:
+ *               description:
+ *                 type: string
+ *                 example: Pagamento referente ao pedido #123
+ *               amountBrl:
+ *                 type: number
+ *                 example: 250.00
+ *               paymentMethod:
+ *                 type: string
+ *                 nullable: true
+ *                 example: pix
+ *     responses:
+ *       201:
+ *         description: Cobrança criada com sucesso
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 id:
+ *                   type: string
+ *                   format: uuid
+ *                 description:
+ *                   type: string
+ *                 amountBrl:
+ *                   type: number
+ *                 externalId:
+ *                   type: string
+ *                   nullable: true
+ *                 status:
+ *                   type: string
+ *                   example: pending
+ *                 paymentMethod:
+ *                   type: string
+ *                   nullable: true
+ *                 createdAt:
+ *                   type: string
+ *                   format: date-time
+ *                 paidAt:
+ *                   type: string
+ *                   format: date-time
+ *                   nullable: true
+ *       400:
+ *         description: Campos obrigatórios ausentes ou inválidos
+ *       401:
+ *         description: Não autorizado
+ *       500:
+ *         description: Erro interno do servidor
+ */
+export async function POST(request: Request) {
+  try {
+    const token = await resolveToken(request)
+    if (!token) {
+      return NextResponse.json({ error: 'Token não fornecido' }, { status: 401 })
+    }
+
+    const body = await request.json()
+    const { description, amountBrl, paymentMethod } = body
+
+    if (!description || amountBrl === undefined || amountBrl === null) {
+      return NextResponse.json({ error: 'description e amountBrl são obrigatórios' }, { status: 400 })
+    }
+
+    const parsed = Number(amountBrl)
+    if (isNaN(parsed) || parsed <= 0) {
+      return NextResponse.json({ error: 'amountBrl deve ser um número positivo' }, { status: 400 })
+    }
+
+    const charge = await createCharge(token, { description, amountBrl: parsed, paymentMethod })
+    return NextResponse.json(charge, { status: 201 })
+  } catch (error: any) {
+    console.error('Erro na rota POST /api/charges:', error)
+
+    if (error.message === 'Token inválido ou expirado') {
+      return NextResponse.json({ error: error.message }, { status: 401 })
+    }
+
+    // Erros do Prisma ou outros erros internos
+    const status = error.name === 'PrismaClientKnownRequestError' || error.name === 'PrismaClientValidationError' ? 400 : 500
+    const message = process.env.NODE_ENV === 'development' ? error.message : 'Erro interno ao criar cobrança'
+
+    return NextResponse.json({ error: message }, { status })
+  }
+}
+
 export async function GET(request: Request) {
   try {
     const token = await resolveToken(request)
@@ -94,17 +211,16 @@ export async function GET(request: Request) {
     const result = await listCharges(token, { page, limit })
     return NextResponse.json(result)
   } catch (error: any) {
+    console.error('Erro na rota GET /api/charges:', error)
+
     if (error.message === 'Token inválido ou expirado') {
       return NextResponse.json({ error: error.message }, { status: 401 })
     }
 
-    console.error('Erro na rota GET /api/charges:', error)
+    // Tratamento mais limpo para erros internos
+    const status = error.name === 'PrismaClientKnownRequestError' || error.name === 'PrismaClientValidationError' ? 400 : 500
+    const message = process.env.NODE_ENV === 'development' ? error.message : 'Erro interno ao buscar cobranças'
 
-    const errorMessage =
-      process.env.NODE_ENV === 'development'
-        ? `Erro: ${error.message || 'Erro desconhecido'}`
-        : 'Erro interno ao buscar cobranças'
-
-    return NextResponse.json({ error: errorMessage }, { status: 500 })
+    return NextResponse.json({ error: message }, { status })
   }
 }
