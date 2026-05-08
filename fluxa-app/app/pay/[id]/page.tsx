@@ -155,9 +155,9 @@ export default function PaymentPage() {
       </Card>
 
       {/* Footer */}
-      <div className="mt-6 text-center text-xs text-muted-foreground">
+      {/* <div className="mt-6 text-center text-xs text-muted-foreground">
         Pagamento processado com segurança via Asaas
-      </div>
+      </div> */}
     </div>
   )
 }

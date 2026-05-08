@@ -110,10 +110,10 @@ export default function HomePage() {
                 Todas as transações são registradas na blockchain, garantindo total rastreabilidade. Você sempre tem acesso ao hash da transação e pode verificar no explorer.
               </p>
               <ul className="space-y-3">
-                <li className="flex items-center gap-3 text-muted-foreground">
+                {/* <li className="flex items-center gap-3 text-muted-foreground">
                   <Shield className="h-5 w-5 text-primary" />
                   Pagamentos processados via Asaas
-                </li>
+                </li> */}
                 <li className="flex items-center gap-3 text-muted-foreground">
                   <Shield className="h-5 w-5 text-primary" />
                   Conversão com melhores taxas do mercado
