@@ -97,9 +97,10 @@ export async function verifyToken(token: string) {
 
 export async function getUserFromToken(token: string) {
   const decoded = await verifyToken(token)
-  
+
   const user = await db.user.findUnique({
-    where: { id: decoded.userId }
+    where: { id: decoded.userId },
+    include: { address: true },
   })
 
   if (!user) {
@@ -110,7 +111,20 @@ export async function getUserFromToken(token: string) {
     id: user.id,
     email: user.email,
     name: user.name,
+    cnpj: user.cnpj,
     walletAddress: user.walletAddress,
-    createdAt: user.createdAt
+    address: user.address
+      ? {
+          id: user.address.id,
+          zipCode: user.address.zipCode,
+          street: user.address.street,
+          number: user.address.number,
+          complement: user.address.complement,
+          neighborhood: user.address.neighborhood,
+          city: user.address.city,
+          state: user.address.state,
+        }
+      : null,
+    createdAt: user.createdAt,
   }
 }

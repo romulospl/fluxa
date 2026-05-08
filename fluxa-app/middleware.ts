@@ -21,7 +21,7 @@ export async function middleware(request: NextRequest) {
   // 2. Permite rotas públicas (Páginas e APIs)
   if (PUBLIC_ROUTES.includes(pathname) || PUBLIC_API_ROUTES.includes(pathname)) {
     // Se o usuário já está logado e tenta ir para login/register, redireciona para dashboard
-    if (token && (pathname === '/login' || pathname === '/register')) {
+    if (token && (pathname === '/' || pathname === '/login' || pathname === '/register')) {
       try {
         const secret = new TextEncoder().encode(process.env.JWT_SECRET || 'fallback-secret')
         await jwtVerify(token, secret)
