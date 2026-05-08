@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useTheme } from 'next-themes'
 import { Menu, Bell, Sun, Moon, X, Zap } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -12,7 +12,10 @@ interface HeaderProps {
 
 export function Header({ title }: HeaderProps) {
   const [mobileNavOpen, setMobileNavOpen] = useState(false)
+  const [mounted, setMounted] = useState(false)
   const { theme, setTheme } = useTheme()
+
+  useEffect(() => setMounted(true), [])
 
   return (
     <>
@@ -50,7 +53,7 @@ export function Header({ title }: HeaderProps) {
             onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
             className="hidden md:flex"
           >
-            {theme === 'dark' ? (
+            {mounted && theme === 'dark' ? (
               <Sun className="h-5 w-5" />
             ) : (
               <Moon className="h-5 w-5" />

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useTheme } from 'next-themes'
@@ -29,6 +29,9 @@ export function Sidebar() {
   const pathname = usePathname()
   const { theme, setTheme } = useTheme()
   const [logoutOpen, setLogoutOpen] = useState(false)
+  const [mounted, setMounted] = useState(false)
+
+  useEffect(() => setMounted(true), [])
 
   return (
     <>
@@ -74,7 +77,7 @@ export function Sidebar() {
               onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
               className="w-full justify-start gap-3 text-sidebar-foreground/70 hover:text-sidebar-foreground"
             >
-              {theme === 'dark' ? (
+              {mounted && theme === 'dark' ? (
                 <>
                   <Sun className="h-5 w-5" />
                   Modo Claro
