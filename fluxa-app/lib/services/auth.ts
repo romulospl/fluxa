@@ -95,6 +95,79 @@ export async function verifyToken(token: string) {
   }
 }
 
+export async function updateUser(
+  token: string,
+  data: {
+    name?: string
+    email?: string
+    address?: {
+      zipCode?: string
+      street?: string
+      number?: string
+      complement?: string | null
+      neighborhood?: string
+      city?: string
+      state?: string
+    }
+  }
+) {
+  const decoded = await verifyToken(token)
+
+  const user = await db.user.update({
+    where: { id: decoded.userId },
+    data: {
+      ...(data.name !== undefined && { name: data.name }),
+      ...(data.email !== undefined && { email: data.email }),
+      ...(data.address && {
+        address: {
+          upsert: {
+            create: {
+              zipCode: data.address.zipCode ?? '',
+              street: data.address.street ?? '',
+              number: data.address.number ?? '',
+              complement: data.address.complement ?? null,
+              neighborhood: data.address.neighborhood ?? '',
+              city: data.address.city ?? '',
+              state: data.address.state ?? '',
+            },
+            update: {
+              ...(data.address.zipCode !== undefined && { zipCode: data.address.zipCode }),
+              ...(data.address.street !== undefined && { street: data.address.street }),
+              ...(data.address.number !== undefined && { number: data.address.number }),
+              ...(data.address.complement !== undefined && { complement: data.address.complement }),
+              ...(data.address.neighborhood !== undefined && { neighborhood: data.address.neighborhood }),
+              ...(data.address.city !== undefined && { city: data.address.city }),
+              ...(data.address.state !== undefined && { state: data.address.state }),
+            },
+          },
+        },
+      }),
+    },
+    include: { address: true },
+  })
+
+  return {
+    id: user.id,
+    email: user.email,
+    name: user.name,
+    cnpj: user.cnpj,
+    walletAddress: user.walletAddress,
+    address: user.address
+      ? {
+          id: user.address.id,
+          zipCode: user.address.zipCode,
+          street: user.address.street,
+          number: user.address.number,
+          complement: user.address.complement,
+          neighborhood: user.address.neighborhood,
+          city: user.address.city,
+          state: user.address.state,
+        }
+      : null,
+    createdAt: user.createdAt,
+  }
+}
+
 export async function getUserFromToken(token: string) {
   const decoded = await verifyToken(token)
 

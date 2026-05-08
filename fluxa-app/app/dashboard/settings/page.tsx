@@ -34,7 +34,9 @@ export default function SettingsPage() {
   const [isLoadingUser, setIsLoadingUser] = useState(true)
   const [isEditing, setIsEditing] = useState(false)
 
+  const [isSavingProfile, setIsSavingProfile] = useState(false)
   const [profileSaved, setProfileSaved] = useState(false)
+  const [profileError, setProfileError] = useState<string | null>(null)
   const [passwordSaved, setPasswordSaved] = useState(false)
 
   const [name, setName] = useState('')
@@ -62,7 +64,7 @@ export default function SettingsPage() {
   useEffect(() => {
     async function loadUser() {
       try {
-        const res = await fetch('/api/current')
+        const res = await fetch('/api/user')
         if (!res.ok) return
         const data: UserData = await res.json()
         const fields = {
@@ -131,11 +133,33 @@ export default function SettingsPage() {
     }
   }
 
-  const handleSaveProfile = (e: React.FormEvent) => {
+  const handleSaveProfile = async (e: React.FormEvent) => {
     e.preventDefault()
-    setIsEditing(false)
-    setProfileSaved(true)
-    setTimeout(() => setProfileSaved(false), 2000)
+    setProfileError(null)
+    setIsSavingProfile(true)
+    try {
+      const res = await fetch('/api/user', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name,
+          email,
+          address: { zipCode: zipCode.replace(/\D/g, ''), street, number, complement: complement || null, neighborhood, city, state },
+        }),
+      })
+      if (!res.ok) {
+        const data = await res.json()
+        setProfileError(data.error || 'Erro ao salvar dados.')
+        return
+      }
+      setIsEditing(false)
+      setProfileSaved(true)
+      setTimeout(() => setProfileSaved(false), 2000)
+    } catch {
+      setProfileError('Erro de conexão. Tente novamente.')
+    } finally {
+      setIsSavingProfile(false)
+    }
   }
 
   const handleSavePassword = (e: React.FormEvent) => {
@@ -314,24 +338,34 @@ export default function SettingsPage() {
         </Card>
 
         {isEditing && (
-          <div className="mt-4 flex justify-end gap-2">
-            <Button type="button" variant="outline" className="gap-2" onClick={handleCancel}>
-              <X className="h-4 w-4" />
-              Cancelar
-            </Button>
-            <Button type="submit" className="gap-2">
-              {profileSaved ? (
-                <>
-                  <Check className="h-4 w-4" />
-                  Salvo!
-                </>
-              ) : (
-                <>
-                  <Save className="h-4 w-4" />
-                  Salvar Dados
-                </>
-              )}
-            </Button>
+          <div className="mt-4 space-y-2">
+            {profileError && (
+              <p className="text-sm text-destructive text-right">{profileError}</p>
+            )}
+            <div className="flex justify-end gap-2">
+              <Button type="button" variant="outline" className="gap-2" onClick={handleCancel} disabled={isSavingProfile}>
+                <X className="h-4 w-4" />
+                Cancelar
+              </Button>
+              <Button type="submit" className="gap-2" disabled={isSavingProfile}>
+                {isSavingProfile ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    Salvando...
+                  </>
+                ) : profileSaved ? (
+                  <>
+                    <Check className="h-4 w-4" />
+                    Salvo!
+                  </>
+                ) : (
+                  <>
+                    <Save className="h-4 w-4" />
+                    Salvar Dados
+                  </>
+                )}
+              </Button>
+            </div>
           </div>
         )}
       </form>

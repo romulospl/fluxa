@@ -1,0 +1,245 @@
+import { NextResponse } from 'next/server'
+import { getUserFromToken, updateUser } from '@/lib/services/auth'
+import { cookies } from 'next/headers'
+
+async function resolveToken(request: Request): Promise<string | null> {
+  const authHeader = request.headers.get('Authorization')
+  if (authHeader?.startsWith('Bearer ')) return authHeader.substring(7)
+  const cookieStore = await cookies()
+  return cookieStore.get('fluxa-token')?.value || null
+}
+
+const userSchema = {
+  type: 'object',
+  properties: {
+    id: { type: 'string', format: 'uuid' },
+    email: { type: 'string', format: 'email' },
+    name: { type: 'string', nullable: true },
+    cnpj: { type: 'string', nullable: true },
+    walletAddress: { type: 'string', nullable: true },
+    createdAt: { type: 'string', format: 'date-time' },
+    address: {
+      type: 'object',
+      nullable: true,
+      properties: {
+        id: { type: 'string', format: 'uuid' },
+        zipCode: { type: 'string' },
+        street: { type: 'string' },
+        number: { type: 'string' },
+        complement: { type: 'string', nullable: true },
+        neighborhood: { type: 'string' },
+        city: { type: 'string' },
+        state: { type: 'string' },
+      },
+    },
+  },
+}
+
+/**
+ * @swagger
+ * /api/user:
+ *   get:
+ *     summary: Obtém os dados do usuário autenticado
+ *     description: Retorna as informações do usuário autenticado a partir do token JWT enviado no header Authorization ou via cookie.
+ *     security:
+ *       - BearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Dados do usuário retornados com sucesso
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 id:
+ *                   type: string
+ *                   format: uuid
+ *                 email:
+ *                   type: string
+ *                   format: email
+ *                 name:
+ *                   type: string
+ *                   nullable: true
+ *                 cnpj:
+ *                   type: string
+ *                   nullable: true
+ *                 walletAddress:
+ *                   type: string
+ *                   nullable: true
+ *                 createdAt:
+ *                   type: string
+ *                   format: date-time
+ *                 address:
+ *                   type: object
+ *                   nullable: true
+ *                   properties:
+ *                     id:
+ *                       type: string
+ *                       format: uuid
+ *                     zipCode:
+ *                       type: string
+ *                     street:
+ *                       type: string
+ *                     number:
+ *                       type: string
+ *                     complement:
+ *                       type: string
+ *                       nullable: true
+ *                     neighborhood:
+ *                       type: string
+ *                     city:
+ *                       type: string
+ *                     state:
+ *                       type: string
+ *       401:
+ *         description: Não autorizado
+ *       500:
+ *         description: Erro interno do servidor
+ *   put:
+ *     summary: Atualiza os dados do usuário autenticado
+ *     description: Substitui nome, e-mail e endereço completo do usuário autenticado.
+ *     security:
+ *       - BearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               name:
+ *                 type: string
+ *                 example: João da Silva
+ *               email:
+ *                 type: string
+ *                 format: email
+ *                 example: joao@exemplo.com
+ *               address:
+ *                 type: object
+ *                 properties:
+ *                   zipCode:
+ *                     type: string
+ *                     example: "01310100"
+ *                   street:
+ *                     type: string
+ *                     example: Avenida Paulista
+ *                   number:
+ *                     type: string
+ *                     example: "1000"
+ *                   complement:
+ *                     type: string
+ *                     nullable: true
+ *                     example: Apto 42
+ *                   neighborhood:
+ *                     type: string
+ *                     example: Bela Vista
+ *                   city:
+ *                     type: string
+ *                     example: São Paulo
+ *                   state:
+ *                     type: string
+ *                     example: SP
+ *     responses:
+ *       200:
+ *         description: Dados atualizados com sucesso
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 id:
+ *                   type: string
+ *                   format: uuid
+ *                 email:
+ *                   type: string
+ *                   format: email
+ *                 name:
+ *                   type: string
+ *                   nullable: true
+ *                 cnpj:
+ *                   type: string
+ *                   nullable: true
+ *                 walletAddress:
+ *                   type: string
+ *                   nullable: true
+ *                 createdAt:
+ *                   type: string
+ *                   format: date-time
+ *                 address:
+ *                   type: object
+ *                   nullable: true
+ *                   properties:
+ *                     id:
+ *                       type: string
+ *                       format: uuid
+ *                     zipCode:
+ *                       type: string
+ *                     street:
+ *                       type: string
+ *                     number:
+ *                       type: string
+ *                     complement:
+ *                       type: string
+ *                       nullable: true
+ *                     neighborhood:
+ *                       type: string
+ *                     city:
+ *                       type: string
+ *                     state:
+ *                       type: string
+ *       401:
+ *         description: Não autorizado
+ *       500:
+ *         description: Erro interno do servidor
+ */
+
+export async function GET(request: Request) {
+  try {
+    const token = await resolveToken(request)
+    if (!token) {
+      return NextResponse.json({ error: 'Token não fornecido' }, { status: 401 })
+    }
+
+    const user = await getUserFromToken(token)
+    return NextResponse.json(user, { status: 200 })
+  } catch (error: any) {
+    if (error.message === 'Token inválido ou expirado' || error.message === 'Usuário não encontrado') {
+      return NextResponse.json({ error: error.message }, { status: 401 })
+    }
+
+    console.error('Erro na rota GET /api/user:', error)
+
+    const errorMessage = process.env.NODE_ENV === 'development'
+      ? `Erro: ${error.message || 'Erro desconhecido'}`
+      : 'Erro interno ao buscar dados do usuário'
+
+    return NextResponse.json({ error: errorMessage }, { status: 500 })
+  }
+}
+
+export async function PUT(request: Request) {
+  try {
+    const token = await resolveToken(request)
+    if (!token) {
+      return NextResponse.json({ error: 'Token não fornecido' }, { status: 401 })
+    }
+
+    const body = await request.json()
+    const { name, email, address } = body
+
+    const updated = await updateUser(token, { name, email, address })
+    return NextResponse.json(updated, { status: 200 })
+  } catch (error: any) {
+    if (error.message === 'Token inválido ou expirado' || error.message === 'Usuário não encontrado') {
+      return NextResponse.json({ error: error.message }, { status: 401 })
+    }
+
+    console.error('Erro na rota PUT /api/user:', error)
+
+    const errorMessage = process.env.NODE_ENV === 'development'
+      ? `Erro: ${error.message || 'Erro desconhecido'}`
+      : 'Erro interno ao atualizar dados do usuário'
+
+    return NextResponse.json({ error: errorMessage }, { status: 500 })
+  }
+}
