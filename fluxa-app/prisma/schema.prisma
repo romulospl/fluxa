@@ -22,6 +22,7 @@ model User {
   updatedAt     DateTime @updatedAt @map("updated_at")
 
   address Address?
+  charges Charge[]
 
   @@map("users")
 }
@@ -43,4 +44,19 @@ model Address {
   updatedAt DateTime @updatedAt @map("updated_at")
 
   @@map("addresses")
+}
+
+model Charge {
+  id            String    @id @default(uuid()) @db.Uuid
+  userId        String    @map("user_id") @db.Uuid
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  description   String
+  amountBrl     Decimal   @map("amount_brl") @db.Decimal(15, 2)
+  asaasId       String?   @unique @map("asaas_id")
+  status        String
+  paymentMethod String?   @map("payment_method")
+  createdAt     DateTime  @default(now()) @map("created_at")
+  paidAt        DateTime? @map("paid_at")
+
+  @@map("charges")
 }
