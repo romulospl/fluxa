@@ -2,7 +2,7 @@ import { db } from '@/lib/db'
 import bcrypt from 'bcrypt'
 import jwt from 'jsonwebtoken'
 
-export async function registerUser({ name, email, password }: any) {
+export async function registerUser({ name, email, password, walletAddress }: any) {
   // 1. Validação de regras de negócio (ex: e-mail já existe)
   const existingUser = await db.user.findUnique({
     where: { email }
@@ -20,7 +20,8 @@ export async function registerUser({ name, email, password }: any) {
     data: {
       name,
       email,
-      password: hashedPassword
+      password: hashedPassword,
+      walletAddress
     }
   })
 
@@ -28,7 +29,9 @@ export async function registerUser({ name, email, password }: any) {
   return {
     id: user.id,
     email: user.email,
-    name: user.name
+    name: user.name,
+    walletAddress: user.walletAddress,
+    createdAt: user.createdAt
   }
 }
 
@@ -62,7 +65,9 @@ export async function loginUser({ email, password }: any) {
     user: {
       id: user.id,
       email: user.email,
-      name: user.name
+      name: user.name,
+      walletAddress: user.walletAddress,
+      createdAt: user.createdAt
     },
     token
   }

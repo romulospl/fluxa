@@ -23,6 +23,8 @@ import { registerUser } from '@/lib/services/auth'
  *                 type: string
  *               password:
  *                 type: string
+ *               walletAddress:
+ *                 type: string
  *     responses:
  *       201:
  *         description: Usuário criado com sucesso
@@ -37,6 +39,11 @@ import { registerUser } from '@/lib/services/auth'
  *                   type: string
  *                 name:
  *                   type: string
+ *                 walletAddress:
+ *                   type: string
+ *                 createdAt:
+ *                   type: string
+ *                   format: date-time
  *       400:
  *         description: E-mail e senha são obrigatórios, ou E-mail já cadastrado
  *       500:
@@ -45,7 +52,7 @@ import { registerUser } from '@/lib/services/auth'
 export async function POST(request: Request) {
   try {
     const body = await request.json()
-    const { name, email, password } = body
+    const { name, email, password, walletAddress } = body
 
     if (!email || !password) {
       return NextResponse.json(
@@ -55,7 +62,7 @@ export async function POST(request: Request) {
     }
 
     // Chama a camada de serviço para processar o cadastro
-    const user = await registerUser({ name, email, password })
+    const user = await registerUser({ name, email, password, walletAddress })
 
     return NextResponse.json(
       user,
