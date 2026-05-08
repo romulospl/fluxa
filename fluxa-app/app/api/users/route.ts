@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { updateUser } from '@/lib/services/auth'
+import { registerUser, updateUser } from '@/lib/services/auth'
 import { cookies } from 'next/headers'
 
 async function resolveToken(request: Request): Promise<string | null> {
@@ -11,7 +11,85 @@ async function resolveToken(request: Request): Promise<string | null> {
 
 /**
  * @swagger
- * /api/user:
+ * /api/users:
+ *   post:
+ *     tags:
+ *       - Usuário
+ *     summary: Registra um novo usuário
+ *     description: Cria uma nova conta de usuário com e-mail e senha.
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - email
+ *               - password
+ *             properties:
+ *               name:
+ *                 type: string
+ *               email:
+ *                 type: string
+ *               password:
+ *                 type: string
+ *               walletAddress:
+ *                 type: string
+ *               cnpj:
+ *                 type: string
+ *     responses:
+ *       201:
+ *         description: Usuário criado com sucesso
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 id:
+ *                   type: string
+ *                 email:
+ *                   type: string
+ *                 name:
+ *                   type: string
+ *                 walletAddress:
+ *                   type: string
+ *                 createdAt:
+ *                   type: string
+ *                   format: date-time
+ *       400:
+ *         description: E-mail e senha são obrigatórios, ou E-mail já cadastrado
+ *       500:
+ *         description: Erro interno
+ */
+export async function POST(request: Request) {
+  try {
+    const body = await request.json()
+    const { name, email, password, walletAddress, cnpj, address } = body
+
+    if (!email || !password) {
+      return NextResponse.json({ error: 'Email e senha são obrigatórios' }, { status: 400 })
+    }
+
+    const user = await registerUser({ name, email, password, walletAddress, cnpj, address })
+    return NextResponse.json(user, { status: 201 })
+  } catch (error: any) {
+    if (error.message === 'Este e-mail já está cadastrado') {
+      return NextResponse.json({ error: error.message }, { status: 400 })
+    }
+
+    console.error('Erro na rota POST /api/users:', error)
+
+    const errorMessage = process.env.NODE_ENV === 'development'
+      ? `Erro: ${error.message || 'Erro desconhecido'}`
+      : 'Erro interno ao processar o cadastro'
+
+    return NextResponse.json({ error: errorMessage }, { status: 500 })
+  }
+}
+
+/**
+ * @swagger
+ * /api/users:
  *   put:
  *     tags:
  *       - Usuário
@@ -129,7 +207,7 @@ export async function PUT(request: Request) {
       return NextResponse.json({ error: error.message }, { status: 401 })
     }
 
-    console.error('Erro na rota PUT /api/user:', error)
+    console.error('Erro na rota PUT /api/users:', error)
 
     const errorMessage = process.env.NODE_ENV === 'development'
       ? `Erro: ${error.message || 'Erro desconhecido'}`

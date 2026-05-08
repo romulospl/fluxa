@@ -74,7 +74,7 @@ export default function SettingsPage() {
   useEffect(() => {
     async function loadUser() {
       try {
-        const res = await fetch('/api/user/current')
+        const res = await fetch('/api/users/current')
         if (!res.ok) return
         const data: UserData = await res.json()
         setCnpj(data.cnpj ? formatCNPJ(data.cnpj) : '')
@@ -149,7 +149,7 @@ export default function SettingsPage() {
     setProfileError(null)
     setIsSavingProfile(true)
     try {
-      const res = await fetch('/api/user', {
+      const res = await fetch('/api/users', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -185,7 +185,7 @@ export default function SettingsPage() {
     }
     setIsSavingPassword(true)
     try {
-      const res = await fetch('/api/user/password', {
+      const res = await fetch('/api/users/password', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ currentPassword, newPassword }),

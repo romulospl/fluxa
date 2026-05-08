@@ -11,7 +11,7 @@ async function resolveToken(request: Request): Promise<string | null> {
 
 /**
  * @swagger
- * /api/user/password:
+ * /api/users/password:
  *   patch:
  *     tags:
  *       - Usuário
@@ -73,7 +73,7 @@ export async function PATCH(request: Request) {
       return NextResponse.json({ error: error.message }, { status: 401 })
     }
 
-    console.error('Erro na rota PATCH /api/user/password:', error)
+    console.error('Erro na rota PATCH /api/users/password:', error)
 
     const errorMessage = process.env.NODE_ENV === 'development'
       ? `Erro: ${error.message || 'Erro desconhecido'}`

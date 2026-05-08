@@ -3,7 +3,15 @@ import type { NextRequest } from 'next/server'
 import { jwtVerify } from 'jose'
 
 const PUBLIC_ROUTES = ['/', '/login', '/register']
-const PUBLIC_API_ROUTES = ['/api/login', '/api/register']
+const PUBLIC_API_ROUTES = ['/api/login']
+
+function isPublicApiRoute(request: NextRequest): boolean {
+  const { pathname, method } = request.nextUrl
+  if (PUBLIC_API_ROUTES.includes(pathname)) return true
+  // POST /api/users é público (cadastro); outros métodos requerem autenticação
+  if (pathname === '/api/users' && request.method === 'POST') return true
+  return false
+}
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
@@ -19,7 +27,7 @@ export async function middleware(request: NextRequest) {
   }
 
   // 2. Permite rotas públicas (Páginas e APIs)
-  if (PUBLIC_ROUTES.includes(pathname) || PUBLIC_API_ROUTES.includes(pathname)) {
+  if (PUBLIC_ROUTES.includes(pathname) || isPublicApiRoute(request)) {
     // Se o usuário já está logado e tenta ir para login/register, redireciona para dashboard
     if (token && (pathname === '/' || pathname === '/login' || pathname === '/register')) {
       try {

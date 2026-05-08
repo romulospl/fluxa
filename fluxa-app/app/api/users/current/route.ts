@@ -4,7 +4,7 @@ import { cookies } from 'next/headers'
 
 /**
  * @swagger
- * /api/user/current:
+ * /api/users/current:
  *   get:
  *     tags:
  *       - Usuário
@@ -86,7 +86,7 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: error.message }, { status: 401 })
     }
 
-    console.error('Erro na rota GET /api/user/current:', error)
+    console.error('Erro na rota GET /api/users/current:', error)
 
     const errorMessage = process.env.NODE_ENV === 'development'
       ? `Erro: ${error.message || 'Erro desconhecido'}`

@@ -62,6 +62,9 @@ fluxa-app/
 
 ## API Standards
 
+### URL convention
+API resource segments use the **plural** form: `/api/users/*`, `/api/charges/*`, etc.
+
 ### Response format (`/api-response-standard` skill)
 - **Success:** Return data directly at root level — no `message` wrapper. HTTP status communicates success.
 - **Login:** Exception — return `{ user: {...}, token: "..." }` since there are two distinct objects.
