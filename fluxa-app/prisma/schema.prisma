@@ -18,6 +18,7 @@ model User {
   cnpj          String?  @unique @map("cnpj")
   password      String
   walletAddress String?  @map("wallet_address")
+  externalReference  String? @unique @map("external_reference")
   createdAt     DateTime @default(now()) @map("created_at")
   updatedAt     DateTime @updatedAt @map("updated_at")
 
