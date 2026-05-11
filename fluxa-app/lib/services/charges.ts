@@ -100,6 +100,16 @@ export async function createCharge(
   return charge
 }
 
+export async function markChargeAsPaid(externalId: string, paymentDate: string) {
+  await db.charge.updateMany({
+    where: { externalId },
+    data: {
+      status: 'paid',
+      paidAt: new Date(paymentDate),
+    },
+  })
+}
+
 export async function listCharges(
   token: string,
   { page = 1, limit = 10 }: { page?: number; limit?: number }
