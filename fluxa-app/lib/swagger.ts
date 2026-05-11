@@ -14,6 +14,7 @@ export const getApiDocs = async () => {
         { name: 'Autenticação', description: 'Rotas de login, registro e logout' },
         { name: 'Usuário', description: 'Rotas de consulta e atualização de dados do usuário' },
         { name: 'Cobrança', description: 'Rotas de listagem e gerenciamento de cobranças' },
+        { name: 'Webhook', description: 'Endpoints para recebimento de eventos externos' },
       ],
       components: {
         securitySchemes: {

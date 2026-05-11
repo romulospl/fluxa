@@ -3,7 +3,7 @@ import type { NextRequest } from 'next/server'
 import { jwtVerify } from 'jose'
 
 const PUBLIC_ROUTES = ['/', '/login', '/register']
-const PUBLIC_API_ROUTES = ['/api/login']
+const PUBLIC_API_ROUTES = ['/api/login', '/api/webhook-asaas']
 
 function isPublicApiRoute(request: NextRequest): boolean {
   const { pathname, method } = request.nextUrl
