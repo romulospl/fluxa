@@ -1,9 +1,7 @@
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useState } from 'react'
 import { AlertCircle } from 'lucide-react'
-import { CRYPTO_ASSETS } from '@/lib/types'
-import { mockQuotes, formatBRL, calculateCryptoAmount } from '@/lib/data'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -13,37 +11,18 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
 
 interface NewChargeModalProps {
   open: boolean
   onClose: () => void
-  onSubmit: (data: { amountBRL: number; description: string; cryptoAsset: string }) => void
+  onSubmit: (data: { amountBRL: number; description: string; billingType: 'BOLETO' | 'PIX' }) => void
 }
 
 export function NewChargeModal({ open, onClose, onSubmit }: NewChargeModalProps) {
   const [amount, setAmount] = useState('')
   const [description, setDescription] = useState('')
-  const [selectedAsset, setSelectedAsset] = useState('BTC')
+  const [billingType, setBillingType] = useState<'BOLETO' | 'PIX'>('BOLETO')
   const [error, setError] = useState('')
-
-  const estimatedCrypto = useMemo(() => {
-    const numAmount = parseFloat(amount.replace(/\D/g, '')) / 100
-    if (!numAmount || isNaN(numAmount)) return null
-
-    const quote = mockQuotes.find(q => q.symbol === selectedAsset)
-    if (!quote) return null
-
-    return calculateCryptoAmount(numAmount, quote.priceInBRL)
-  }, [amount, selectedAsset])
-
-  const selectedQuote = mockQuotes.find(q => q.symbol === selectedAsset)
 
   const handleAmountChange = (value: string) => {
     const numericValue = value.replace(/\D/g, '')
@@ -73,12 +52,12 @@ export function NewChargeModal({ open, onClose, onSubmit }: NewChargeModalProps)
     onSubmit({
       amountBRL: numAmount,
       description: description.trim(),
-      cryptoAsset: selectedAsset,
+      billingType,
     })
 
     setAmount('')
     setDescription('')
-    setSelectedAsset('BTC')
+    setBillingType('BOLETO')
     setError('')
   }
 
@@ -122,36 +101,24 @@ export function NewChargeModal({ open, onClose, onSubmit }: NewChargeModalProps)
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="crypto">Receber em</Label>
-            <Select value={selectedAsset} onValueChange={setSelectedAsset}>
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {CRYPTO_ASSETS.map((asset) => (
-                  <SelectItem key={asset.symbol} value={asset.symbol}>
-                    <span className="flex items-center gap-2">
-                      <span className="text-lg">{asset.icon}</span>
-                      <span>{asset.asset}</span>
-                      <span className="text-muted-foreground">({asset.symbol})</span>
-                    </span>
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          {estimatedCrypto && selectedQuote && (
-            <div className="rounded-lg bg-secondary/50 p-4">
-              <div className="text-sm text-muted-foreground">Estimativa de recebimento</div>
-              <div className="mt-1 text-xl font-semibold text-primary">
-                ≈ {estimatedCrypto.toFixed(selectedAsset === 'BTC' ? 8 : selectedAsset === 'ETH' ? 6 : 2)} {selectedAsset}
-              </div>
-              <div className="mt-1 text-xs text-muted-foreground">
-                Cotação atual: {formatBRL(selectedQuote.priceInBRL)} / {selectedAsset}
-              </div>
+            <Label>Tipo de pagamento</Label>
+            <div className="flex gap-3">
+              {(['BOLETO', 'PIX'] as const).map((type) => (
+                <button
+                  key={type}
+                  type="button"
+                  onClick={() => setBillingType(type)}
+                  className={`flex-1 rounded-md border px-4 py-2 text-sm font-medium transition-colors ${
+                    billingType === type
+                      ? 'border-primary bg-primary text-primary-foreground'
+                      : 'border-border bg-background text-muted-foreground hover:text-foreground'
+                  }`}
+                >
+                  {type === 'BOLETO' ? 'Boleto' : 'PIX'}
+                </button>
+              ))}
             </div>
-          )}
+          </div>
 
           {error && (
             <div className="flex items-center gap-2 text-sm text-destructive">

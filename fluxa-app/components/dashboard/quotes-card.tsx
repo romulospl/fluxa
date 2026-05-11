@@ -79,7 +79,7 @@ export function QuotesCard() {
         <CardTitle className="text-card-foreground">Cotações em Tempo Real</CardTitle>
         <button
           onClick={() => fetchPrices(true)}
-          disabled={isRefreshing || loading}
+          disabled={isRefreshing}
           className="text-muted-foreground hover:text-foreground transition-colors disabled:opacity-40"
           aria-label="Atualizar cotações"
         >

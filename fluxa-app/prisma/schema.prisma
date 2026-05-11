@@ -56,6 +56,7 @@ model Charge {
   externalId    String?   @unique @map("external_id")
   status        String
   paymentMethod String?   @map("payment_method")
+  paymentUrl    String?   @map("payment_url")
   createdAt     DateTime  @default(now()) @map("created_at")
   paidAt        DateTime? @map("paid_at")
 

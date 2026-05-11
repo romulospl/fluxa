@@ -5,13 +5,14 @@ export interface Charge {
   description: string
   amountBRL: number
   amountCrypto?: number
-  cryptoAsset: string
+  cryptoAsset?: string
   status: ChargeStatus
+  paymentMethod?: 'BOLETO' | 'PIX' | null
+  paymentUrl?: string | null
   createdAt: Date
   paidAt?: Date
   completedAt?: Date
   txHash?: string
-  paymentLink?: string
 }
 
 export interface User {

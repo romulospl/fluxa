@@ -72,7 +72,12 @@ async function resolveToken(request: Request): Promise<string | null> {
  *                         type: string
  *                       paymentMethod:
  *                         type: string
+ *                         enum: [BOLETO, PIX]
  *                         nullable: true
+ *                       paymentUrl:
+ *                         type: string
+ *                         nullable: true
+ *                         description: URL da página de pagamento no Asaas
  *                       createdAt:
  *                         type: string
  *                         format: date-time
@@ -99,8 +104,8 @@ async function resolveToken(request: Request): Promise<string | null> {
  *   post:
  *     tags:
  *       - Cobrança
- *     summary: Cria uma nova cobrança
- *     description: Cria uma cobrança com status inicial "pending" vinculada ao usuário autenticado.
+ *     summary: Cria uma nova cobrança (boleto ou PIX) no Asaas
+ *     description: Cria um cliente no Asaas (se necessário), gera um boleto ou PIX e registra a cobrança vinculada ao usuário autenticado.
  *     security:
  *       - BearerAuth: []
  *     requestBody:
@@ -119,10 +124,11 @@ async function resolveToken(request: Request): Promise<string | null> {
  *               amountBrl:
  *                 type: number
  *                 example: 250.00
- *               paymentMethod:
+ *               billingType:
  *                 type: string
- *                 nullable: true
- *                 example: pix
+ *                 enum: [BOLETO, PIX]
+ *                 default: BOLETO
+ *                 description: Tipo de cobrança (boleto ou PIX)
  *     responses:
  *       201:
  *         description: Cobrança criada com sucesso
@@ -140,13 +146,19 @@ async function resolveToken(request: Request): Promise<string | null> {
  *                   type: number
  *                 externalId:
  *                   type: string
- *                   nullable: true
+ *                   description: ID do pagamento no Asaas (pay_...)
  *                 status:
  *                   type: string
  *                   example: pending
  *                 paymentMethod:
  *                   type: string
+ *                   enum: [BOLETO, PIX]
+ *                   example: BOLETO
+ *                 paymentUrl:
+ *                   type: string
  *                   nullable: true
+ *                   description: URL da página de pagamento no Asaas
+ *                   example: https://sandbox.asaas.com/i/abc123
  *                 createdAt:
  *                   type: string
  *                   format: date-time
@@ -155,7 +167,7 @@ async function resolveToken(request: Request): Promise<string | null> {
  *                   format: date-time
  *                   nullable: true
  *       400:
- *         description: Campos obrigatórios ausentes ou inválidos
+ *         description: Campos obrigatórios ausentes, inválidos ou usuário sem nome/CNPJ
  *       401:
  *         description: Não autorizado
  *       500:
@@ -169,7 +181,7 @@ export async function POST(request: Request) {
     }
 
     const body = await request.json()
-    const { description, amountBrl, paymentMethod } = body
+    const { description, amountBrl, billingType } = body
 
     if (!description || amountBrl === undefined || amountBrl === null) {
       return NextResponse.json({ error: 'description e amountBrl são obrigatórios' }, { status: 400 })
@@ -180,7 +192,11 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'amountBrl deve ser um número positivo' }, { status: 400 })
     }
 
-    const charge = await createCharge(token, { description, amountBrl: parsed, paymentMethod })
+    if (billingType !== undefined && billingType !== 'BOLETO' && billingType !== 'PIX') {
+      return NextResponse.json({ error: 'billingType deve ser BOLETO ou PIX' }, { status: 400 })
+    }
+
+    const charge = await createCharge(token, { description, amountBrl: parsed, billingType })
     return NextResponse.json(charge, { status: 201 })
   } catch (error: any) {
     console.error('Erro na rota POST /api/charges:', error)
@@ -189,7 +205,10 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: error.message }, { status: 401 })
     }
 
-    // Erros do Prisma ou outros erros internos
+    if (error.statusCode) {
+      return NextResponse.json({ error: error.message }, { status: error.statusCode })
+    }
+
     const status = error.name === 'PrismaClientKnownRequestError' || error.name === 'PrismaClientValidationError' ? 400 : 500
     const message = process.env.NODE_ENV === 'development' ? error.message : 'Erro interno ao criar cobrança'
 

@@ -1,26 +1,85 @@
 import { db } from '@/lib/db'
 import { verifyToken } from '@/lib/services/auth'
+
+const ASAAS_BASE_URL = 'https://sandbox.asaas.com/api/v3'
+
+async function asaasPost(path: string, body: object) {
+  const token = process.env.ASAAS_TOKEN_API
+  if (!token) throw new Error('ASAAS_TOKEN_API não configurado')
+
+  const res = await fetch(`${ASAAS_BASE_URL}${path}`, {
+    method: 'POST',
+    headers: {
+      accept: 'application/json',
+      'content-type': 'application/json',
+      access_token: token,
+    },
+    body: JSON.stringify(body),
+  })
+
+  if (!res.ok) {
+    const body = await res.json().catch(() => null)
+    const description = body?.errors?.[0]?.description ?? `Asaas API error (${res.status})`
+    const err = Object.assign(new Error(description), { statusCode: res.status })
+    throw err
+  }
+
+  return res.json()
+}
+
 export async function createCharge(
   token: string,
-  {
-    description,
-    amountBrl,
-    paymentMethod,
-  }: {
-    description: string
-    amountBrl: number
-    paymentMethod?: string
-  }
+  { description, amountBrl, billingType = 'BOLETO' }: { description: string; amountBrl: number; billingType?: 'BOLETO' | 'PIX' }
 ) {
   const decoded = await verifyToken(token)
 
+  const user = await db.user.findUnique({
+    where: { id: decoded.userId },
+    select: { id: true, name: true, cnpj: true, externalReference: true },
+  })
+
+  if (!user) throw new Error('Usuário não encontrado')
+  if (!user.name || !user.cnpj) {
+    throw new Error('Usuário precisa ter nome e CNPJ cadastrados para criar cobranças')
+  }
+
+  let customerRef = user.externalReference
+
+  if (!customerRef) {
+    const customer = await asaasPost('/customers', {
+      name: user.name,
+      cpfCnpj: user.cnpj,
+    })
+
+    customerRef = customer.id as string
+
+    await db.user.update({
+      where: { id: user.id },
+      data: { externalReference: customerRef },
+    })
+  }
+
+  const dueDate = new Date()
+  dueDate.setDate(dueDate.getDate() + 30)
+  const dueDateStr = dueDate.toISOString().split('T')[0]
+
+  const payment = await asaasPost('/payments', {
+    customer: customerRef,
+    billingType,
+    value: amountBrl,
+    dueDate: dueDateStr,
+    description,
+  })
+
   const charge = await db.charge.create({
     data: {
-      userId: decoded.userId,
+      userId: user.id,
       description,
       amountBrl,
+      externalId: payment.id as string,
       status: 'pending',
-      paymentMethod: paymentMethod ?? null,
+      paymentMethod: billingType,
+      paymentUrl: (payment.invoiceUrl as string) ?? null,
     },
     select: {
       id: true,
@@ -29,6 +88,7 @@ export async function createCharge(
       externalId: true,
       status: true,
       paymentMethod: true,
+      paymentUrl: true,
       createdAt: true,
       paidAt: true,
     },
@@ -58,6 +118,7 @@ export async function listCharges(
         externalId: true,
         status: true,
         paymentMethod: true,
+        paymentUrl: true,
         createdAt: true,
         paidAt: true,
       },

@@ -28,7 +28,7 @@ export default function ChargesPage() {
     return matchesSearch && matchesStatus
   })
 
-  const handleNewCharge = (data: { amountBRL: number; description: string; cryptoAsset: string }) => {
+  const handleNewCharge = (data: { amountBRL: number; description: string; billingType: 'BOLETO' | 'PIX' }) => {
     addCharge(data)
     setIsModalOpen(false)
   }

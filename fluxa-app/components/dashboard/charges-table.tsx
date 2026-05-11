@@ -67,33 +67,57 @@ export function ChargesTable({ charges, onViewCharge }: ChargesTableProps) {
                     <td className="hidden py-4 pr-4 sm:table-cell">
                       {charge.amountCrypto ? (
                         <span className="font-mono text-sm text-primary">
-                          {formatCrypto(charge.amountCrypto, charge.cryptoAsset)}
+                          {formatCrypto(charge.amountCrypto, charge.cryptoAsset ?? '')}
                         </span>
                       ) : (
                         <span className="text-sm text-muted-foreground">—</span>
                       )}
                     </td>
                     <td className="py-4 pr-4">
-                      <span className={cn(
-                        'inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium',
-                        statusConfig.bgColor,
-                        statusConfig.color
-                      )}>
-                        {statusConfig.label}
-                      </span>
+                      <div className="flex flex-col gap-1">
+                        <span className={cn(
+                          'inline-flex w-fit items-center rounded-full px-2.5 py-0.5 text-xs font-medium',
+                          statusConfig.bgColor,
+                          statusConfig.color
+                        )}>
+                          {statusConfig.label}
+                        </span>
+                        {charge.paymentMethod && (
+                          <span className="inline-flex w-fit items-center rounded-full bg-muted px-2.5 py-0.5 text-xs font-medium text-muted-foreground">
+                            {charge.paymentMethod === 'PIX' ? 'PIX' : 'Boleto'}
+                          </span>
+                        )}
+                      </div>
                     </td>
                     <td className="hidden py-4 pr-4 text-sm text-muted-foreground md:table-cell">
                       {formatDate(charge.createdAt)}
                     </td>
                     <td className="py-4">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => onViewCharge?.(charge)}
-                        className="text-muted-foreground hover:text-foreground"
-                      >
-                        Ver
-                      </Button>
+                      {charge.paymentUrl ? (
+                        <a
+                          href={charge.paymentUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                        >
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="gap-1 text-muted-foreground hover:text-foreground"
+                          >
+                            <ExternalLink className="h-3 w-3" />
+                            Ver
+                          </Button>
+                        </a>
+                      ) : (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => onViewCharge?.(charge)}
+                          className="text-muted-foreground hover:text-foreground"
+                        >
+                          Ver
+                        </Button>
+                      )}
                     </td>
                   </tr>
                 )

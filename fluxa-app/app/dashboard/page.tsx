@@ -13,7 +13,7 @@ export default function DashboardPage() {
   const { charges, stats, addCharge } = useCharges()
   const [isModalOpen, setIsModalOpen] = useState(false)
 
-  const handleNewCharge = (data: { amountBRL: number; description: string; cryptoAsset: string }) => {
+  const handleNewCharge = (data: { amountBRL: number; description: string; billingType: 'BOLETO' | 'PIX' }) => {
     addCharge(data)
     setIsModalOpen(false)
   }
