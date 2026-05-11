@@ -8,15 +8,8 @@ export function useCharges() {
   const [charges, setCharges] = useState<Charge[]>(mockCharges)
   const [isLoading, setIsLoading] = useState(false)
 
-  const addCharge = useCallback((charge: Omit<Charge, 'id' | 'createdAt' | 'status'>) => {
-    const newCharge: Charge = {
-      ...charge,
-      id: Math.random().toString(36).substring(7),
-      createdAt: new Date(),
-      status: 'pending',
-    }
-    setCharges(prev => [newCharge, ...prev])
-    return newCharge
+  const addCharge = useCallback((charge: Charge) => {
+    setCharges(prev => [charge, ...prev])
   }, [])
 
   const updateChargeStatus = useCallback((id: string, status: Charge['status']) => {

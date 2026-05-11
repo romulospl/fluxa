@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { Plus, Search, Filter } from 'lucide-react'
 import { useCharges } from '@/hooks/use-charges'
-import { ChargeStatus, STATUS_CONFIG } from '@/lib/types'
+import { Charge, ChargeStatus, STATUS_CONFIG } from '@/lib/types'
 import { ChargesTable } from '@/components/dashboard/charges-table'
 import { NewChargeModal } from '@/components/dashboard/new-charge-modal'
 import { Button } from '@/components/ui/button'
@@ -28,8 +28,8 @@ export default function ChargesPage() {
     return matchesSearch && matchesStatus
   })
 
-  const handleNewCharge = (data: { amountBRL: number; description: string; billingType: 'BOLETO' | 'PIX' }) => {
-    addCharge(data)
+  const handleChargeCreated = (charge: Charge) => {
+    addCharge(charge)
     setIsModalOpen(false)
   }
 
@@ -100,7 +100,7 @@ export default function ChargesPage() {
       <NewChargeModal
         open={isModalOpen}
         onClose={() => setIsModalOpen(false)}
-        onSubmit={handleNewCharge}
+        onSuccess={handleChargeCreated}
       />
     </div>
   )

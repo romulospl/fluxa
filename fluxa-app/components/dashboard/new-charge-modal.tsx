@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { AlertCircle } from 'lucide-react'
+import { AlertCircle, Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -11,18 +11,20 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog'
+import { Charge } from '@/lib/types'
 
 interface NewChargeModalProps {
   open: boolean
   onClose: () => void
-  onSubmit: (data: { amountBRL: number; description: string; billingType: 'BOLETO' | 'PIX' }) => void
+  onSuccess: (charge: Charge) => void
 }
 
-export function NewChargeModal({ open, onClose, onSubmit }: NewChargeModalProps) {
+export function NewChargeModal({ open, onClose, onSuccess }: NewChargeModalProps) {
   const [amount, setAmount] = useState('')
   const [description, setDescription] = useState('')
   const [billingType, setBillingType] = useState<'BOLETO' | 'PIX'>('BOLETO')
   const [error, setError] = useState('')
+  const [isLoading, setIsLoading] = useState(false)
 
   const handleAmountChange = (value: string) => {
     const numericValue = value.replace(/\D/g, '')
@@ -34,7 +36,7 @@ export function NewChargeModal({ open, onClose, onSubmit }: NewChargeModalProps)
     setError('')
   }
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
     const numAmount = parseFloat(amount.replace(/\./g, '').replace(',', '.'))
@@ -49,16 +51,48 @@ export function NewChargeModal({ open, onClose, onSubmit }: NewChargeModalProps)
       return
     }
 
-    onSubmit({
-      amountBRL: numAmount,
-      description: description.trim(),
-      billingType,
-    })
-
-    setAmount('')
-    setDescription('')
-    setBillingType('BOLETO')
+    setIsLoading(true)
     setError('')
+
+    try {
+      const response = await fetch('/api/charges', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({
+          amountBrl: numAmount,
+          description: description.trim(),
+          billingType,
+        }),
+      })
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        setError(data.error ?? 'Erro ao criar cobrança')
+        return
+      }
+
+      const charge: Charge = {
+        id: data.id,
+        description: data.description,
+        amountBRL: data.amountBrl,
+        status: data.status,
+        paymentMethod: data.paymentMethod ?? null,
+        paymentUrl: data.paymentUrl ?? null,
+        createdAt: new Date(data.createdAt),
+        paidAt: data.paidAt ? new Date(data.paidAt) : undefined,
+      }
+
+      setAmount('')
+      setDescription('')
+      setBillingType('BOLETO')
+      onSuccess(charge)
+    } catch {
+      setError('Erro de conexão. Tente novamente.')
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   return (
@@ -108,11 +142,10 @@ export function NewChargeModal({ open, onClose, onSubmit }: NewChargeModalProps)
                   key={type}
                   type="button"
                   onClick={() => setBillingType(type)}
-                  className={`flex-1 rounded-md border px-4 py-2 text-sm font-medium transition-colors ${
-                    billingType === type
+                  className={`flex-1 rounded-md border px-4 py-2 text-sm font-medium transition-colors ${billingType === type
                       ? 'border-primary bg-primary text-primary-foreground'
                       : 'border-border bg-background text-muted-foreground hover:text-foreground'
-                  }`}
+                    }`}
                 >
                   {type === 'BOLETO' ? 'Boleto' : 'PIX'}
                 </button>
@@ -128,11 +161,12 @@ export function NewChargeModal({ open, onClose, onSubmit }: NewChargeModalProps)
           )}
 
           <div className="flex gap-3 pt-2">
-            <Button type="button" variant="outline" onClick={onClose} className="flex-1">
+            <Button type="button" variant="outline" onClick={onClose} disabled={isLoading} className="flex-1">
               Cancelar
             </Button>
-            <Button type="submit" className="flex-1">
-              Criar Cobrança
+            <Button type="submit" disabled={isLoading} className="flex-1">
+              {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              {isLoading ? 'Criando...' : 'Criar Cobrança'}
             </Button>
           </div>
         </form>

@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { Plus } from 'lucide-react'
 import { useCharges } from '@/hooks/use-charges'
+import { Charge } from '@/lib/types'
 import { StatsCards } from '@/components/dashboard/stats-cards'
 import { ChargesTable } from '@/components/dashboard/charges-table'
 import { QuotesCard } from '@/components/dashboard/quotes-card'
@@ -13,8 +14,8 @@ export default function DashboardPage() {
   const { charges, stats, addCharge } = useCharges()
   const [isModalOpen, setIsModalOpen] = useState(false)
 
-  const handleNewCharge = (data: { amountBRL: number; description: string; billingType: 'BOLETO' | 'PIX' }) => {
-    addCharge(data)
+  const handleChargeCreated = (charge: Charge) => {
+    addCharge(charge)
     setIsModalOpen(false)
   }
 
@@ -51,7 +52,7 @@ export default function DashboardPage() {
       <NewChargeModal
         open={isModalOpen}
         onClose={() => setIsModalOpen(false)}
-        onSubmit={handleNewCharge}
+        onSuccess={handleChargeCreated}
       />
     </div>
   )
