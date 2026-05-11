@@ -1,9 +1,9 @@
 'use client'
 
 import { useState } from 'react'
-import { Plus, Search, Filter } from 'lucide-react'
+import { Plus, Search, Filter, Loader2 } from 'lucide-react'
 import { useCharges } from '@/hooks/use-charges'
-import { Charge, ChargeStatus, STATUS_CONFIG } from '@/lib/types'
+import { ChargeStatus, STATUS_CONFIG } from '@/lib/types'
 import { ChargesTable } from '@/components/dashboard/charges-table'
 import { NewChargeModal } from '@/components/dashboard/new-charge-modal'
 import { Button } from '@/components/ui/button'
@@ -15,9 +15,20 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+  PaginationEllipsis,
+} from '@/components/ui/pagination'
+
+const PAGE_LIMIT = 10
 
 export default function ChargesPage() {
-  const { charges, addCharge } = useCharges()
+  const { charges, isLoading, page, totalPages, goToPage } = useCharges(PAGE_LIMIT)
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
   const [statusFilter, setStatusFilter] = useState<ChargeStatus | 'all'>('all')
@@ -28,10 +39,7 @@ export default function ChargesPage() {
     return matchesSearch && matchesStatus
   })
 
-  const handleChargeCreated = (charge: Charge) => {
-    addCharge(charge)
-    setIsModalOpen(false)
-  }
+  const pageNumbers = buildPageNumbers(page, totalPages)
 
   return (
     <div className="space-y-6">
@@ -39,9 +47,7 @@ export default function ChargesPage() {
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-2xl font-bold text-foreground">Cobranças</h1>
-          <p className="text-muted-foreground">
-            Gerencie todas as suas cobranças
-          </p>
+          <p className="text-muted-foreground">Gerencie todas as suas cobranças</p>
         </div>
         <Button onClick={() => setIsModalOpen(true)} className="gap-2">
           <Plus className="h-4 w-4" />
@@ -77,31 +83,97 @@ export default function ChargesPage() {
       </div>
 
       {/* Charges Table */}
-      <ChargesTable charges={filteredCharges} />
-
-      {/* Empty State */}
-      {filteredCharges.length === 0 && (
-        <div className="flex flex-col items-center justify-center rounded-lg border border-dashed border-border py-12">
-          <p className="text-muted-foreground">Nenhuma cobrança encontrada</p>
-          <Button
-            variant="link"
-            onClick={() => {
-              setSearchQuery('')
-              setStatusFilter('all')
-            }}
-            className="mt-2"
-          >
-            Limpar filtros
-          </Button>
+      {isLoading ? (
+        <div className="flex items-center justify-center py-16">
+          <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
         </div>
+      ) : (
+        <>
+          <ChargesTable charges={filteredCharges} />
+
+          {filteredCharges.length === 0 && (
+            <div className="flex flex-col items-center justify-center rounded-lg border border-dashed border-border py-12">
+              <p className="text-muted-foreground">Nenhuma cobrança encontrada</p>
+              {(searchQuery || statusFilter !== 'all') && (
+                <Button
+                  variant="link"
+                  onClick={() => { setSearchQuery(''); setStatusFilter('all') }}
+                  className="mt-2"
+                >
+                  Limpar filtros
+                </Button>
+              )}
+            </div>
+          )}
+        </>
+      )}
+
+      {/* Pagination */}
+      {!isLoading && totalPages > 1 && (
+        <Pagination>
+          <PaginationContent>
+            <PaginationItem>
+              <PaginationPrevious
+                href="#"
+                onClick={(e) => { e.preventDefault(); if (page > 1) goToPage(page - 1) }}
+                aria-disabled={page <= 1}
+                className={page <= 1 ? 'pointer-events-none opacity-50' : ''}
+              />
+            </PaginationItem>
+
+            {pageNumbers.map((p, i) =>
+              p === null ? (
+                <PaginationItem key={`ellipsis-${i}`}>
+                  <PaginationEllipsis />
+                </PaginationItem>
+              ) : (
+                <PaginationItem key={p}>
+                  <PaginationLink
+                    href="#"
+                    isActive={p === page}
+                    onClick={(e) => { e.preventDefault(); goToPage(p) }}
+                  >
+                    {p}
+                  </PaginationLink>
+                </PaginationItem>
+              )
+            )}
+
+            <PaginationItem>
+              <PaginationNext
+                href="#"
+                onClick={(e) => { e.preventDefault(); if (page < totalPages) goToPage(page + 1) }}
+                aria-disabled={page >= totalPages}
+                className={page >= totalPages ? 'pointer-events-none opacity-50' : ''}
+              />
+            </PaginationItem>
+          </PaginationContent>
+        </Pagination>
       )}
 
       {/* New Charge Modal */}
       <NewChargeModal
         open={isModalOpen}
         onClose={() => setIsModalOpen(false)}
-        onSuccess={handleChargeCreated}
+        onSuccess={() => { goToPage(1); setIsModalOpen(false) }}
       />
     </div>
   )
+}
+
+function buildPageNumbers(current: number, total: number): (number | null)[] {
+  if (total <= 7) return Array.from({ length: total }, (_, i) => i + 1)
+
+  const pages: (number | null)[] = [1]
+
+  if (current > 3) pages.push(null)
+
+  const start = Math.max(2, current - 1)
+  const end = Math.min(total - 1, current + 1)
+  for (let i = start; i <= end; i++) pages.push(i)
+
+  if (current < total - 2) pages.push(null)
+
+  pages.push(total)
+  return pages
 }

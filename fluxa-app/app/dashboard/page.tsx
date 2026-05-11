@@ -3,7 +3,6 @@
 import { useState } from 'react'
 import { Plus } from 'lucide-react'
 import { useCharges } from '@/hooks/use-charges'
-import { Charge } from '@/lib/types'
 import { StatsCards } from '@/components/dashboard/stats-cards'
 import { ChargesTable } from '@/components/dashboard/charges-table'
 import { QuotesCard } from '@/components/dashboard/quotes-card'
@@ -11,13 +10,8 @@ import { NewChargeModal } from '@/components/dashboard/new-charge-modal'
 import { Button } from '@/components/ui/button'
 
 export default function DashboardPage() {
-  const { charges, stats, addCharge } = useCharges()
+  const { charges, stats, goToPage } = useCharges(5)
   const [isModalOpen, setIsModalOpen] = useState(false)
-
-  const handleChargeCreated = (charge: Charge) => {
-    addCharge(charge)
-    setIsModalOpen(false)
-  }
 
   return (
     <div className="space-y-6">
@@ -52,7 +46,7 @@ export default function DashboardPage() {
       <NewChargeModal
         open={isModalOpen}
         onClose={() => setIsModalOpen(false)}
-        onSuccess={handleChargeCreated}
+        onSuccess={() => { goToPage(1); setIsModalOpen(false) }}
       />
     </div>
   )
