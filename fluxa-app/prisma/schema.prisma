@@ -57,6 +57,7 @@ model Charge {
   status        String
   paymentMethod String?   @map("payment_method")
   paymentUrl    String?   @map("payment_url")
+  dueDate       DateTime? @map("due_date")
   createdAt     DateTime  @default(now()) @map("created_at")
   paidAt        DateTime? @map("paid_at")
 

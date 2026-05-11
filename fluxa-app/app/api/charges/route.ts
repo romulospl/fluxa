@@ -181,7 +181,7 @@ export async function POST(request: Request) {
     }
 
     const body = await request.json()
-    const { description, amountBrl, billingType } = body
+    const { description, amountBrl, billingType, dueDate } = body
 
     if (!description || amountBrl === undefined || amountBrl === null) {
       return NextResponse.json({ error: 'description e amountBrl são obrigatórios' }, { status: 400 })
@@ -196,7 +196,16 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'billingType deve ser BOLETO ou PIX' }, { status: 400 })
     }
 
-    const charge = await createCharge(token, { description, amountBrl: parsed, billingType })
+    if (!dueDate || !/^\d{4}-\d{2}-\d{2}$/.test(dueDate)) {
+      return NextResponse.json({ error: 'dueDate é obrigatório no formato YYYY-MM-DD' }, { status: 400 })
+    }
+
+    const today = new Date().toISOString().split('T')[0]
+    if (dueDate < today) {
+      return NextResponse.json({ error: 'dueDate não pode ser uma data no passado' }, { status: 400 })
+    }
+
+    const charge = await createCharge(token, { description, amountBrl: parsed, billingType, dueDate })
     return NextResponse.json(charge, { status: 201 })
   } catch (error: any) {
     console.error('Erro na rota POST /api/charges:', error)

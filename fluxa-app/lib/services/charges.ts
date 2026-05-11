@@ -29,7 +29,12 @@ async function asaasPost(path: string, body: object) {
 
 export async function createCharge(
   token: string,
-  { description, amountBrl, billingType = 'BOLETO' }: { description: string; amountBrl: number; billingType?: 'BOLETO' | 'PIX' }
+  { description, amountBrl, billingType = 'BOLETO', dueDate }: {
+    description: string
+    amountBrl: number
+    billingType?: 'BOLETO' | 'PIX'
+    dueDate: string
+  }
 ) {
   const decoded = await verifyToken(token)
 
@@ -59,15 +64,11 @@ export async function createCharge(
     })
   }
 
-  const dueDate = new Date()
-  dueDate.setDate(dueDate.getDate() + 30)
-  const dueDateStr = dueDate.toISOString().split('T')[0]
-
   const payment = await asaasPost('/payments', {
     customer: customerRef,
     billingType,
     value: amountBrl,
-    dueDate: dueDateStr,
+    dueDate,
     description,
   })
 
@@ -80,6 +81,7 @@ export async function createCharge(
       status: 'pending',
       paymentMethod: billingType,
       paymentUrl: (payment.invoiceUrl as string) ?? null,
+      dueDate: new Date(dueDate),
     },
     select: {
       id: true,
@@ -89,6 +91,7 @@ export async function createCharge(
       status: true,
       paymentMethod: true,
       paymentUrl: true,
+      dueDate: true,
       createdAt: true,
       paidAt: true,
     },

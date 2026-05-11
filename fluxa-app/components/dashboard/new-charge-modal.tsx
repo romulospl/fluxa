@@ -19,10 +19,21 @@ interface NewChargeModalProps {
   onSuccess: (charge: Charge) => void
 }
 
+function defaultDueDate() {
+  const d = new Date()
+  d.setDate(d.getDate() + 3)
+  return d.toISOString().split('T')[0]
+}
+
+function todayStr() {
+  return new Date().toISOString().split('T')[0]
+}
+
 export function NewChargeModal({ open, onClose, onSuccess }: NewChargeModalProps) {
   const [amount, setAmount] = useState('')
   const [description, setDescription] = useState('')
   const [billingType, setBillingType] = useState<'BOLETO' | 'PIX'>('BOLETO')
+  const [dueDate, setDueDate] = useState(defaultDueDate)
   const [error, setError] = useState('')
   const [isLoading, setIsLoading] = useState(false)
 
@@ -51,6 +62,11 @@ export function NewChargeModal({ open, onClose, onSuccess }: NewChargeModalProps
       return
     }
 
+    if (!dueDate) {
+      setError('Informe a data de vencimento')
+      return
+    }
+
     setIsLoading(true)
     setError('')
 
@@ -63,6 +79,7 @@ export function NewChargeModal({ open, onClose, onSuccess }: NewChargeModalProps
           amountBrl: numAmount,
           description: description.trim(),
           billingType,
+          dueDate,
         }),
       })
 
@@ -87,6 +104,7 @@ export function NewChargeModal({ open, onClose, onSuccess }: NewChargeModalProps
       setAmount('')
       setDescription('')
       setBillingType('BOLETO')
+      setDueDate(defaultDueDate())
       onSuccess(charge)
     } catch {
       setError('Erro de conexão. Tente novamente.')
@@ -129,6 +147,20 @@ export function NewChargeModal({ open, onClose, onSuccess }: NewChargeModalProps
               value={description}
               onChange={(e) => {
                 setDescription(e.target.value)
+                setError('')
+              }}
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="dueDate">Vencimento</Label>
+            <Input
+              id="dueDate"
+              type="date"
+              value={dueDate}
+              min={todayStr()}
+              onChange={(e) => {
+                setDueDate(e.target.value)
                 setError('')
               }}
             />
