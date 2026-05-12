@@ -6,9 +6,8 @@ const PUBLIC_ROUTES = ['/', '/login', '/register']
 const PUBLIC_API_ROUTES = ['/api/login', '/api/webhook-asaas']
 
 function isPublicApiRoute(request: NextRequest): boolean {
-  const { pathname, method } = request.nextUrl
+  const { pathname } = request.nextUrl
   if (PUBLIC_API_ROUTES.includes(pathname)) return true
-  // POST /api/users é público (cadastro); outros métodos requerem autenticação
   if (pathname === '/api/users' && request.method === 'POST') return true
   return false
 }
