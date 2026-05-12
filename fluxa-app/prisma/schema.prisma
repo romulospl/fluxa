@@ -49,6 +49,7 @@ model Address {
 
 model Charge {
   id            String    @id @default(uuid()) @db.Uuid
+  number        Int       @map("number")
   userId        String    @map("user_id") @db.Uuid
   user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   description   String
@@ -62,5 +63,6 @@ model Charge {
   createdAt     DateTime  @default(now()) @map("created_at")
   paidAt        DateTime? @map("paid_at")
 
+  @@unique([userId, number])
   @@map("charges")
 }

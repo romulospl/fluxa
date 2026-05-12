@@ -20,6 +20,12 @@
                   "bytes": "757569642d647570"
                 },
                 {
+                  "string": "user-02"
+                },
+                {
+                  "u32": 1
+                },
+                {
                   "i128": "1000"
                 },
                 {
@@ -74,6 +80,14 @@
                   },
                   {
                     "key": {
+                      "symbol": "charge_number"
+                    },
+                    "val": {
+                      "u32": 1
+                    }
+                  },
+                  {
+                    "key": {
                       "symbol": "payload_hash"
                     },
                     "val": {
@@ -94,6 +108,14 @@
                     },
                     "val": {
                       "u64": "0"
+                    }
+                  },
+                  {
+                    "key": {
+                      "symbol": "user_id"
+                    },
+                    "val": {
+                      "string": "user-02"
                     }
                   }
                 ]

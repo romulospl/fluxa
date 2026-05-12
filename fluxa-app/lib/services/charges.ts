@@ -73,34 +73,45 @@ export async function createCharge(
     description,
   })
 
-  const charge = await db.charge.create({
-    data: {
-      userId: user.id,
-      description,
-      amountBrl,
-      externalId: payment.id as string,
-      status: 'pending',
-      paymentMethod: billingType,
-      paymentUrl: (payment.invoiceUrl as string) ?? null,
-      dueDate: new Date(dueDate),
-    },
-    select: {
-      id: true,
-      description: true,
-      amountBrl: true,
-      externalId: true,
-      status: true,
-      paymentMethod: true,
-      paymentUrl: true,
-      dueDate: true,
-      externalHash: true,
-      createdAt: true,
-      paidAt: true,
-    },
+  const charge = await db.$transaction(async (tx) => {
+    const last = await tx.charge.findFirst({
+      where: { userId: user.id },
+      orderBy: { number: 'desc' },
+      select: { number: true },
+    })
+    const nextNumber = (last?.number ?? 0) + 1
+
+    return tx.charge.create({
+      data: {
+        number: nextNumber,
+        userId: user.id,
+        description,
+        amountBrl,
+        externalId: payment.id as string,
+        status: 'pending',
+        paymentMethod: billingType,
+        paymentUrl: (payment.invoiceUrl as string) ?? null,
+        dueDate: new Date(dueDate),
+      },
+      select: {
+        id: true,
+        number: true,
+        description: true,
+        amountBrl: true,
+        externalId: true,
+        status: true,
+        paymentMethod: true,
+        paymentUrl: true,
+        dueDate: true,
+        externalHash: true,
+        createdAt: true,
+        paidAt: true,
+      },
+    })
   })
 
   // Fire-and-forget: registra on-chain sem bloquear a resposta
-  recordChargeOnStellar({ ...charge, amountBrl: charge.amountBrl.toString() })
+  recordChargeOnStellar({ ...charge, userId: user.id, amountBrl: charge.amountBrl.toString() })
     .then(async (txHash) => {
       await db.charge.update({
         where: { id: charge.id },
@@ -158,6 +169,7 @@ export async function listCharges(
       take: limit,
       select: {
         id: true,
+        number: true,
         description: true,
         amountBrl: true,
         externalId: true,

@@ -27,6 +27,8 @@ async function stellarPost(path: string, body: object): Promise<{ txHash: string
 
 export async function recordChargeOnStellar(charge: {
   id: string
+  userId: string
+  number: number
   amountBrl: string | number
   description: string
   createdAt: Date

@@ -28,7 +28,7 @@ app.use('*', async (c, next) => {
 })
 
 app.post('/charges', async (c) => {
-  let body: { id: string; amountBrl: string | number; description: string; createdAt: string }
+  let body: { id: string; userId: string; number: number; amountBrl: string | number; description: string; createdAt: string }
 
   try {
     body = await c.req.json()
@@ -36,15 +36,17 @@ app.post('/charges', async (c) => {
     return c.json({ error: 'Body inválido' }, 400)
   }
 
-  const { id, amountBrl, description, createdAt } = body
+  const { id, userId, number, amountBrl, description, createdAt } = body
 
-  if (!id || amountBrl === undefined || !description || !createdAt) {
-    return c.json({ error: 'Campos obrigatórios: id, amountBrl, description, createdAt' }, 400)
+  if (!id || !userId || number === undefined || amountBrl === undefined || !description || !createdAt) {
+    return c.json({ error: 'Campos obrigatórios: id, userId, number, amountBrl, description, createdAt' }, 400)
   }
 
   try {
     const txHash = await recordCharge({
       id,
+      userId,
+      number,
       amountBrl,
       description,
       createdAt: new Date(createdAt),

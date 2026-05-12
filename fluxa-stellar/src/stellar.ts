@@ -89,6 +89,8 @@ async function sendSorobanTx(
 
 export async function recordCharge(charge: {
   id: string
+  userId: string
+  number: number
   amountBrl: string | number
   description: string
   createdAt: Date
@@ -107,6 +109,8 @@ export async function recordCharge(charge: {
   const operation = contract.call(
     'register',
     nativeToScVal(chargeIdBytes, { type: 'bytes' }),
+    nativeToScVal(charge.userId, { type: 'string' }),
+    nativeToScVal(charge.number, { type: 'u32' }),
     nativeToScVal(amountCentavos, { type: 'i128' }),
     xdr.ScVal.scvBytes(payloadHash),
   )

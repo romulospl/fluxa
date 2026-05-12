@@ -3,13 +3,22 @@
 use super::*;
 use soroban_sdk::{
     testutils::Address as _,
-    Address, Bytes, BytesN, Env, Symbol,
+    Address, Bytes, BytesN, Env, String, Symbol,
 };
 
 fn make_hash(env: &Env, seed: u8) -> BytesN<32> {
     let mut buf = [0u8; 32];
     buf[0] = seed;
     BytesN::from_array(env, &buf)
+}
+
+fn make_user_id(env: &Env, n: u8) -> String {
+    let s = soroban_sdk::String::from_str(env, match n {
+        1 => "user-01", 2 => "user-02", 3 => "user-03",
+        4 => "user-04", 5 => "user-05", 6 => "user-06",
+        _ => "user-xx",
+    });
+    s
 }
 
 fn setup(env: &Env) -> (ChargeRegistryClient, Address) {
@@ -27,11 +36,14 @@ fn test_register_and_get() {
 
     let (client, _admin) = setup(&env);
     let charge_id = Bytes::from_slice(&env, b"uuid-0001");
+    let user_id = make_user_id(&env, 1);
     let payload_hash = make_hash(&env, 1);
 
-    client.register(&charge_id, &25000, &payload_hash);
+    client.register(&charge_id, &user_id, &1, &25000, &payload_hash);
 
     let record = client.get(&charge_id).expect("charge not found");
+    assert_eq!(record.user_id, user_id);
+    assert_eq!(record.charge_number, 1);
     assert_eq!(record.amount_brl, 25000);
     assert_eq!(record.payload_hash, payload_hash);
     assert_eq!(record.status, Symbol::new(&env, "pending"));
@@ -45,10 +57,11 @@ fn test_duplicate_panics() {
 
     let (client, _admin) = setup(&env);
     let charge_id = Bytes::from_slice(&env, b"uuid-dup");
+    let user_id = make_user_id(&env, 2);
     let hash = make_hash(&env, 2);
 
-    client.register(&charge_id, &1000, &hash);
-    client.register(&charge_id, &1000, &hash);
+    client.register(&charge_id, &user_id, &1, &1000, &hash);
+    client.register(&charge_id, &user_id, &2, &1000, &hash);
 }
 
 #[test]
@@ -87,9 +100,9 @@ fn test_register_requires_admin_auth() {
 
     let (client, admin) = setup(&env);
     let charge_id = Bytes::from_slice(&env, b"uuid-auth");
-    client.register(&charge_id, &5000, &make_hash(&env, 4));
+    let user_id = make_user_id(&env, 4);
+    client.register(&charge_id, &user_id, &1, &5000, &make_hash(&env, 4));
 
-    // Verifica que o auth capturado foi o do admin (não de outra conta)
     let auths = env.auths();
     let admin_auth = auths.iter().any(|(addr, _invocation)| *addr == admin);
     assert!(admin_auth, "register deve exigir auth do admin");
@@ -102,7 +115,8 @@ fn test_update_status() {
 
     let (client, _admin) = setup(&env);
     let charge_id = Bytes::from_slice(&env, b"uuid-status");
-    client.register(&charge_id, &10000, &make_hash(&env, 5));
+    let user_id = make_user_id(&env, 5);
+    client.register(&charge_id, &user_id, &1, &10000, &make_hash(&env, 5));
 
     let record = client.get(&charge_id).expect("not found");
     assert_eq!(record.status, Symbol::new(&env, "pending"));
@@ -131,7 +145,8 @@ fn test_update_status_requires_admin_auth() {
 
     let (client, admin) = setup(&env);
     let charge_id = Bytes::from_slice(&env, b"uuid-status-auth");
-    client.register(&charge_id, &5000, &make_hash(&env, 6));
+    let user_id = make_user_id(&env, 6);
+    client.register(&charge_id, &user_id, &1, &5000, &make_hash(&env, 6));
     client.update_status(&charge_id, &Symbol::new(&env, "paid"));
 
     let auths = env.auths();
@@ -146,7 +161,8 @@ fn test_extend_ttl_existing() {
 
     let (client, _admin) = setup(&env);
     let charge_id = Bytes::from_slice(&env, b"uuid-ttl");
-    client.register(&charge_id, &5000, &make_hash(&env, 3));
+    let user_id = make_user_id(&env, 3);
+    client.register(&charge_id, &user_id, &1, &5000, &make_hash(&env, 3));
     client.extend_charge_ttl(&charge_id);
 }
 
