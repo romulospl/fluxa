@@ -12,7 +12,7 @@ export interface Charge {
   createdAt: Date
   paidAt?: Date
   completedAt?: Date
-  txHash?: string
+  externalHash?: string | null
 }
 
 export interface User {

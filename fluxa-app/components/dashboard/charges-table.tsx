@@ -42,12 +42,13 @@ export function ChargesTable({ charges, onViewCharge }: ChargesTableProps) {
                   <tr key={charge.id} className="border-b border-border/50 last:border-0">
                     <td className="py-4 pr-4">
                       <div className="font-medium text-card-foreground">{charge.description}</div>
-                      {charge.txHash && (
+                      {charge.externalHash && (
                         <div className="mt-1 flex items-center gap-1 text-xs text-muted-foreground">
-                          <span className="font-mono">{shortenHash(charge.txHash)}</span>
+                          <span className="font-mono">{shortenHash(charge.externalHash)}</span>
                           <button
-                            onClick={() => copy(charge.txHash!, charge.id)}
+                            onClick={() => copy(charge.externalHash!, charge.id)}
                             className="p-0.5 hover:text-foreground"
+                            title="Copiar hash da transação"
                           >
                             {isCopied(charge.id) ? (
                               <Check className="h-3 w-3 text-success" />
@@ -55,7 +56,13 @@ export function ChargesTable({ charges, onViewCharge }: ChargesTableProps) {
                               <Copy className="h-3 w-3" />
                             )}
                           </button>
-                          <a href={getExplorerUrl(charge.txHash)} target="_blank" rel="noopener noreferrer" className="p-0.5 hover:text-primary">
+                          <a
+                            href={getExplorerUrl(charge.externalHash)}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="p-0.5 hover:text-primary"
+                            title="Ver no Stellar Expert"
+                          >
                             <ExternalLink className="h-3 w-3" />
                           </a>
                         </div>

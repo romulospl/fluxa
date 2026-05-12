@@ -1,5 +1,6 @@
 import { db } from '@/lib/db'
 import { verifyToken } from '@/lib/services/auth'
+import { recordChargeOnStellar, updateChargeStatusOnStellar } from '@/lib/services/stellar'
 
 const ASAAS_BASE_URL = 'https://sandbox.asaas.com/api/v3'
 
@@ -92,15 +93,34 @@ export async function createCharge(
       paymentMethod: true,
       paymentUrl: true,
       dueDate: true,
+      externalHash: true,
       createdAt: true,
       paidAt: true,
     },
   })
 
+  // Fire-and-forget: registra on-chain sem bloquear a resposta
+  recordChargeOnStellar({ ...charge, amountBrl: charge.amountBrl.toString() })
+    .then(async (txHash) => {
+      await db.charge.update({
+        where: { id: charge.id },
+        data: { externalHash: txHash },
+      })
+      console.log(`[Stellar] charge ${charge.id} registrado: ${txHash}`)
+    })
+    .catch((err: Error) => {
+      console.error(`[Stellar] Falha ao registrar charge ${charge.id}:`, err.message)
+    })
+
   return charge
 }
 
 export async function markChargeAsPaid(externalId: string, paymentDate: string) {
+  const charges = await db.charge.findMany({
+    where: { externalId },
+    select: { id: true, externalHash: true },
+  })
+
   await db.charge.updateMany({
     where: { externalId },
     data: {
@@ -108,6 +128,18 @@ export async function markChargeAsPaid(externalId: string, paymentDate: string) 
       paidAt: new Date(paymentDate),
     },
   })
+
+  for (const charge of charges) {
+    if (!charge.externalHash) continue
+
+    updateChargeStatusOnStellar(charge.id, 'paid')
+      .then((txHash) => {
+        console.log(`[Stellar] status de ${charge.id} atualizado para paid: ${txHash}`)
+      })
+      .catch((err: Error) => {
+        console.error(`[Stellar] Falha ao atualizar status ${charge.id}:`, err.message)
+      })
+  }
 }
 
 export async function listCharges(
@@ -132,6 +164,7 @@ export async function listCharges(
         status: true,
         paymentMethod: true,
         paymentUrl: true,
+        externalHash: true,
         createdAt: true,
         paidAt: true,
       },

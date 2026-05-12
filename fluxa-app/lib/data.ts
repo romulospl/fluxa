@@ -12,7 +12,7 @@ export const mockCharges: Charge[] = [
     createdAt: new Date('2024-01-15'),
     paidAt: new Date('2024-01-16'),
     completedAt: new Date('2024-01-16'),
-    txHash: '0x8f4e3b2a1c9d7e6f5a4b3c2d1e0f9a8b7c6d5e4f3a2b1c0d9e8f7a6b5c4d3e2f1',
+    externalHash: '09e58bfaad2e007132a8dc4dd0db6632cc4789b943cea55f923388073aa67b1f',
   },
   {
     id: '2',
@@ -82,13 +82,15 @@ export function shortenHash(hash: string): string {
   return `${hash.slice(0, 6)}...${hash.slice(-4)}`
 }
 
-export function getExplorerUrl(txHash: string, network: string = 'ethereum'): string {
+export function getExplorerUrl(txHash: string, network: string = 'stellar-testnet'): string {
   const explorers: Record<string, string> = {
+    'stellar-testnet': 'https://stellar.expert/explorer/testnet/tx/',
+    'stellar-mainnet': 'https://stellar.expert/explorer/public/tx/',
     bitcoin: 'https://blockstream.info/tx/',
     ethereum: 'https://etherscan.io/tx/',
     polygon: 'https://polygonscan.com/tx/',
   }
-  return `${explorers[network] || explorers.ethereum}${txHash}`
+  return `${explorers[network] ?? explorers['stellar-testnet']}${txHash}`
 }
 
 export function validateWalletAddress(address: string): boolean {

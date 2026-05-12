@@ -15,7 +15,9 @@ function isPublicApiRoute(request: NextRequest): boolean {
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
-  const token = request.cookies.get('fluxa-token')?.value
+  const authHeader = request.headers.get('Authorization')
+  const token =
+    authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : request.cookies.get('fluxa-token')?.value
 
   // 1. Permite rotas estáticas e do sistema
   if (

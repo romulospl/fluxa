@@ -10,6 +10,7 @@ function mapCharge(c: {
   status: Charge['status']
   paymentMethod?: 'BOLETO' | 'PIX' | null
   paymentUrl?: string | null
+  externalHash?: string | null
   createdAt: string
   paidAt?: string | null
 }): Charge {
@@ -20,6 +21,7 @@ function mapCharge(c: {
     status: c.status,
     paymentMethod: c.paymentMethod ?? null,
     paymentUrl: c.paymentUrl ?? null,
+    externalHash: c.externalHash ?? null,
     createdAt: new Date(c.createdAt),
     paidAt: c.paidAt ? new Date(c.paidAt) : undefined,
   }
