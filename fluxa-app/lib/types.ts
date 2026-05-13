@@ -2,6 +2,7 @@ export type ChargeStatus = 'pending' | 'paid' | 'converting' | 'completed'
 
 export interface Charge {
   id: string
+  number: number
   description: string
   amountBRL: number
   amountCrypto?: number
@@ -12,7 +13,16 @@ export interface Charge {
   createdAt: Date
   paidAt?: Date
   completedAt?: Date
-  externalHash?: string | null
+
+}
+
+export interface ChargeTransaction {
+  id: string
+  chargeId: string
+  status: ChargeStatus
+  hash?: string | null
+  occurredAt: Date
+  createdAt: Date
 }
 
 export interface User {

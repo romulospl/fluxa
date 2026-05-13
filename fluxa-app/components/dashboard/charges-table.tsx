@@ -1,12 +1,12 @@
 'use client'
 
-import { ExternalLink, Copy, Check } from 'lucide-react'
+import { ExternalLink, History } from 'lucide-react'
 import { Charge, STATUS_CONFIG } from '@/lib/types'
-import { formatBRL, formatCrypto, formatDate, shortenHash, getExplorerUrl } from '@/lib/data'
+import { formatBRL, formatCrypto, formatDate } from '@/lib/data'
+import { ChargeTransactionsDialog } from '@/components/dashboard/charge-transactions-dialog'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
-import { useCopyToClipboard } from '@/hooks/use-copy-to-clipboard'
 
 interface ChargesTableProps {
   charges: Charge[]
@@ -14,7 +14,6 @@ interface ChargesTableProps {
 }
 
 export function ChargesTable({ charges, onViewCharge }: ChargesTableProps) {
-  const { copy, isCopied } = useCopyToClipboard()
 
   return (
     <Card className="border-border bg-card">
@@ -41,32 +40,20 @@ export function ChargesTable({ charges, onViewCharge }: ChargesTableProps) {
                 return (
                   <tr key={charge.id} className="border-b border-border/50 last:border-0">
                     <td className="py-4 pr-4">
-                      <div className="font-medium text-card-foreground">{charge.description}</div>
-                      {charge.externalHash && (
-                        <div className="mt-1 flex items-center gap-1 text-xs text-muted-foreground">
-                          <span className="font-mono">{shortenHash(charge.externalHash)}</span>
-                          <button
-                            onClick={() => copy(charge.externalHash!, charge.id)}
-                            className="p-0.5 hover:text-foreground"
-                            title="Copiar hash da transação"
-                          >
-                            {isCopied(charge.id) ? (
-                              <Check className="h-3 w-3 text-success" />
-                            ) : (
-                              <Copy className="h-3 w-3" />
-                            )}
-                          </button>
-                          <a
-                            href={getExplorerUrl(charge.externalHash)}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="p-0.5 hover:text-primary"
-                            title="Ver no Stellar Expert"
-                          >
-                            <ExternalLink className="h-3 w-3" />
-                          </a>
-                        </div>
-                      )}
+                      <div className="font-medium text-card-foreground">
+                        <span className="mr-1.5 text-xs text-muted-foreground">#{charge.number}</span>
+                        {charge.description}
+                      </div>
+                      <ChargeTransactionsDialog
+                        chargeId={charge.id}
+                        chargeNumber={charge.number}
+                        chargeDescription={charge.description}
+                      >
+                        <button className="mt-1 flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground">
+                          <History className="h-3 w-3" />
+                          Histórico
+                        </button>
+                      </ChargeTransactionsDialog>
                     </td>
                     <td className="py-4 pr-4 font-medium text-card-foreground">
                       {formatBRL(charge.amountBRL)}

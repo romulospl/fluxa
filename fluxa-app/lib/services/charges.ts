@@ -73,7 +73,7 @@ export async function createCharge(
     description,
   })
 
-  const charge = await db.$transaction(async (tx) => {
+  const { charge, transactionId } = await db.$transaction(async (tx) => {
     const last = await tx.charge.findFirst({
       where: { userId: user.id },
       orderBy: { number: 'desc' },
@@ -81,7 +81,7 @@ export async function createCharge(
     })
     const nextNumber = (last?.number ?? 0) + 1
 
-    return tx.charge.create({
+    const charge = await tx.charge.create({
       data: {
         number: nextNumber,
         userId: user.id,
@@ -103,19 +103,29 @@ export async function createCharge(
         paymentMethod: true,
         paymentUrl: true,
         dueDate: true,
-        externalHash: true,
         createdAt: true,
         paidAt: true,
       },
     })
+
+    const transaction = await tx.chargeTransaction.create({
+      data: {
+        chargeId: charge.id,
+        status: 'pending',
+        occurredAt: charge.createdAt,
+      },
+      select: { id: true },
+    })
+
+    return { charge, transactionId: transaction.id }
   })
 
   // Fire-and-forget: registra on-chain sem bloquear a resposta
   recordChargeOnStellar({ ...charge, userId: user.id, amountBrl: charge.amountBrl.toString() })
     .then(async (txHash) => {
-      await db.charge.update({
-        where: { id: charge.id },
-        data: { externalHash: txHash },
+      await db.chargeTransaction.update({
+        where: { id: transactionId },
+        data: { hash: txHash },
       })
       console.log(`[Stellar] charge ${charge.id} registrado: ${txHash}`)
     })
@@ -129,28 +139,69 @@ export async function createCharge(
 export async function markChargeAsPaid(externalId: string, paymentDate: string) {
   const charges = await db.charge.findMany({
     where: { externalId },
-    select: { id: true, externalHash: true },
-  })
-
-  await db.charge.updateMany({
-    where: { externalId },
-    data: {
-      status: 'paid',
-      paidAt: new Date(paymentDate),
+    select: {
+      id: true,
+      transactions: {
+        where: { hash: { not: null } },
+        select: { hash: true },
+        take: 1,
+      },
     },
   })
 
+  const paidAt = new Date(paymentDate)
+
+  await db.charge.updateMany({
+    where: { externalId },
+    data: { status: 'paid', paidAt },
+  })
+
   for (const charge of charges) {
-    if (!charge.externalHash) continue
+    const transaction = await db.chargeTransaction.create({
+      data: {
+        chargeId: charge.id,
+        status: 'paid',
+        occurredAt: paidAt,
+      },
+      select: { id: true },
+    })
+
+    if (!charge.transactions.length) continue
 
     updateChargeStatusOnStellar(charge.id, 'paid')
-      .then((txHash) => {
+      .then(async (txHash) => {
+        await db.chargeTransaction.update({
+          where: { id: transaction.id },
+          data: { hash: txHash },
+        })
         console.log(`[Stellar] status de ${charge.id} atualizado para paid: ${txHash}`)
       })
       .catch((err: Error) => {
         console.error(`[Stellar] Falha ao atualizar status ${charge.id}:`, err.message)
       })
   }
+}
+
+export async function listChargeTransactions(token: string, chargeId: string) {
+  const decoded = await verifyToken(token)
+
+  const charge = await db.charge.findFirst({
+    where: { id: chargeId, userId: decoded.userId },
+    select: { id: true },
+  })
+
+  if (!charge) throw Object.assign(new Error('Cobrança não encontrada'), { statusCode: 404 })
+
+  return db.chargeTransaction.findMany({
+    where: { chargeId },
+    orderBy: { occurredAt: 'asc' },
+    select: {
+      id: true,
+      status: true,
+      hash: true,
+      occurredAt: true,
+    },
+  })
 }
 
 export async function listCharges(
@@ -176,7 +227,6 @@ export async function listCharges(
         status: true,
         paymentMethod: true,
         paymentUrl: true,
-        externalHash: true,
         createdAt: true,
         paidAt: true,
       },

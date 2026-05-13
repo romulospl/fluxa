@@ -4,6 +4,7 @@ import { Charge, CryptoQuote } from './types'
 export const mockCharges: Charge[] = [
   {
     id: '1',
+    number: 1,
     description: 'Consultoria de Software',
     amountBRL: 5000,
     amountCrypto: 0.0082,
@@ -12,10 +13,10 @@ export const mockCharges: Charge[] = [
     createdAt: new Date('2024-01-15'),
     paidAt: new Date('2024-01-16'),
     completedAt: new Date('2024-01-16'),
-    externalHash: '09e58bfaad2e007132a8dc4dd0db6632cc4789b943cea55f923388073aa67b1f',
   },
   {
     id: '2',
+    number: 2,
     description: 'Desenvolvimento de API',
     amountBRL: 12500,
     amountCrypto: 3.85,
@@ -26,6 +27,7 @@ export const mockCharges: Charge[] = [
   },
   {
     id: '3',
+    number: 3,
     description: 'Design de Interface',
     amountBRL: 3200,
     cryptoAsset: 'USDT',
@@ -35,6 +37,7 @@ export const mockCharges: Charge[] = [
   },
   {
     id: '4',
+    number: 4,
     description: 'Manutenção Mensal',
     amountBRL: 2800,
     cryptoAsset: 'BTC',
@@ -43,6 +46,7 @@ export const mockCharges: Charge[] = [
   },
   {
     id: '5',
+    number: 5,
     description: 'Auditoria de Segurança',
     amountBRL: 8500,
     cryptoAsset: 'ETH',

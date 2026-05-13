@@ -92,6 +92,7 @@ export function NewChargeModal({ open, onClose, onSuccess }: NewChargeModalProps
 
       const charge: Charge = {
         id: data.id,
+        number: data.number,
         description: data.description,
         amountBRL: data.amountBrl,
         status: data.status,

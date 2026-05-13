@@ -5,23 +5,23 @@ import { Charge } from '@/lib/types'
 
 function mapCharge(c: {
   id: string
+  number: number
   description: string
   amountBrl: number
   status: Charge['status']
   paymentMethod?: 'BOLETO' | 'PIX' | null
   paymentUrl?: string | null
-  externalHash?: string | null
   createdAt: string
   paidAt?: string | null
 }): Charge {
   return {
     id: c.id,
+    number: c.number,
     description: c.description,
     amountBRL: c.amountBrl,
     status: c.status,
     paymentMethod: c.paymentMethod ?? null,
     paymentUrl: c.paymentUrl ?? null,
-    externalHash: c.externalHash ?? null,
     createdAt: new Date(c.createdAt),
     paidAt: c.paidAt ? new Date(c.paidAt) : undefined,
   }
