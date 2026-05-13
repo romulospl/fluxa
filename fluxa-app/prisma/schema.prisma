@@ -76,11 +76,9 @@ model ChargeTransaction {
   charge     Charge   @relation(fields: [chargeId], references: [id], onDelete: Cascade)
   status     String
   hash       String?
-  amountBrl  Decimal? @map("amount_brl") @db.Decimal(15, 2)
-  amountUsdc Decimal? @map("amount_usdc") @db.Decimal(18, 7)
-  occurredAt DateTime @map("occurred_at")
   amountBrl  Decimal?  @map("amount_brl") @db.Decimal(15, 2)
   amountUsdc Decimal?  @map("amount_usdc") @db.Decimal(18, 7)
+  occurredAt DateTime @map("occurred_at")
   createdAt  DateTime @default(now()) @map("created_at")
 
   @@map("charge_transactions")
