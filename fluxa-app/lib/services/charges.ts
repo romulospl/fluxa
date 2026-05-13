@@ -149,7 +149,10 @@ export async function markChargeAsPaid(externalId: string, paymentDate: string) 
     },
   })
 
-  const paidAt = new Date(paymentDate)
+  // Asaas sends paymentDate as YYYY-MM-DD only — no time component. Any fixed
+  // time (midnight, noon UTC) converts incorrectly in BRT. The webhook fires at
+  // the moment of confirmation, so the server clock is the accurate timestamp.
+  const paidAt = new Date()
 
   await db.charge.updateMany({
     where: { externalId },
