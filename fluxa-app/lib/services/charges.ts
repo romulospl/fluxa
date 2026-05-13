@@ -216,6 +216,8 @@ export async function listChargeTransactions(token: string, chargeId: string) {
       id: true,
       status: true,
       hash: true,
+      amountBrl: true,
+      amountUsdc: true,
       occurredAt: true,
     },
   })

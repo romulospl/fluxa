@@ -49,6 +49,14 @@ async function resolveToken(request: Request): Promise<string | null> {
  *                   hash:
  *                     type: string
  *                     nullable: true
+ *                   amountBrl:
+ *                     type: number
+ *                     nullable: true
+ *                     description: Valor em BRL (preenchido em transfer_completed)
+ *                   amountUsdc:
+ *                     type: number
+ *                     nullable: true
+ *                     description: Valor em USDC enviado (preenchido em transfer_completed)
  *                   occurredAt:
  *                     type: string
  *                     format: date-time

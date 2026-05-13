@@ -32,6 +32,7 @@ export async function startUsdcTransferWorker(): Promise<void> {
       where: { id: chargeId },
       select: {
         id: true,
+        amountBrl: true,
         amountUsdc: true,
         user: { select: { walletAddress: true } },
       },
@@ -56,6 +57,8 @@ export async function startUsdcTransferWorker(): Promise<void> {
           chargeId,
           status: 'transfer_completed',
           hash: txHash,
+          amountBrl: charge.amountBrl,
+          amountUsdc: charge.amountUsdc,
           occurredAt: new Date(),
         },
       }),
