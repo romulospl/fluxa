@@ -1,6 +1,6 @@
 import { serve } from '@hono/node-server'
 import { Hono } from 'hono'
-import { recordCharge, updateChargeStatus } from './stellar'
+import { recordCharge, updateChargeStatus, transferUsdc } from './stellar'
 
 const VALID_STATUSES = ['pending', 'paid', 'cancelled', 'overdue'] as const
 type ChargeStatus = (typeof VALID_STATUSES)[number]
@@ -83,6 +83,32 @@ app.patch('/charges/:id/status', async (c) => {
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Erro desconhecido'
     console.error(`[Stellar] Falha ao atualizar status ${chargeId}:`, message)
+    return c.json({ error: message }, 500)
+  }
+})
+
+app.post('/transfers', async (c) => {
+  let body: { to: string; amount: string }
+
+  try {
+    body = await c.req.json()
+  } catch {
+    return c.json({ error: 'Body inválido' }, 400)
+  }
+
+  const { to, amount } = body
+
+  if (!to || !amount) {
+    return c.json({ error: 'Campos obrigatórios: to, amount' }, 400)
+  }
+
+  try {
+    const txHash = await transferUsdc(to, amount)
+    console.log(`[Stellar] ${amount} USDC transferido para ${to}: ${txHash}`)
+    return c.json({ txHash })
+  } catch (err) {
+    const message = err instanceof Error ? err.message : 'Erro desconhecido'
+    console.error(`[Stellar] Falha na transferência para ${to}:`, message)
     return c.json({ error: message }, 500)
   }
 })

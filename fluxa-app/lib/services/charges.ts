@@ -1,6 +1,8 @@
 import { db } from '@/lib/db'
 import { verifyToken } from '@/lib/services/auth'
 import { recordChargeOnStellar, updateChargeStatusOnStellar } from '@/lib/services/stellar'
+import { getUsdcBrlRate, brlToUsdc } from '@/lib/services/exchange'
+import { enqueueUsdcTransfer } from '@/lib/queue'
 
 const ASAAS_BASE_URL = 'https://sandbox.asaas.com/api/v3'
 
@@ -41,12 +43,15 @@ export async function createCharge(
 
   const user = await db.user.findUnique({
     where: { id: decoded.userId },
-    select: { id: true, name: true, cnpj: true, externalReference: true },
+    select: { id: true, name: true, cnpj: true, externalReference: true, walletAddress: true },
   })
 
   if (!user) throw new Error('Usuário não encontrado')
   if (!user.name || !user.cnpj) {
     throw new Error('Usuário precisa ter nome e CNPJ cadastrados para criar cobranças')
+  }
+  if (!user.walletAddress) {
+    throw new Error('Usuário precisa ter endereço de carteira Stellar cadastrado para criar cobranças')
   }
 
   let customerRef = user.externalReference
@@ -64,6 +69,9 @@ export async function createCharge(
       data: { externalReference: customerRef },
     })
   }
+
+  const usdcRate = await getUsdcBrlRate()
+  const amountUsdc = brlToUsdc(amountBrl, usdcRate)
 
   const payment = await asaasPost('/payments', {
     customer: customerRef,
@@ -87,6 +95,7 @@ export async function createCharge(
         userId: user.id,
         description,
         amountBrl,
+        amountUsdc,
         externalId: payment.id as string,
         status: 'pending',
         paymentMethod: billingType,
@@ -98,6 +107,7 @@ export async function createCharge(
         number: true,
         description: true,
         amountBrl: true,
+        amountUsdc: true,
         externalId: true,
         status: true,
         paymentMethod: true,
@@ -156,7 +166,7 @@ export async function markChargeAsPaid(externalId: string, paymentDate: string) 
 
   await db.charge.updateMany({
     where: { externalId },
-    data: { status: 'paid', paidAt },
+    data: { status: 'paid', paidAt, transferStatus: 'transfer_pending' },
   })
 
   for (const charge of charges) {
@@ -169,19 +179,23 @@ export async function markChargeAsPaid(externalId: string, paymentDate: string) 
       select: { id: true },
     })
 
-    if (!charge.transactions.length) continue
-
-    updateChargeStatusOnStellar(charge.id, 'paid')
-      .then(async (txHash) => {
-        await db.chargeTransaction.update({
-          where: { id: transaction.id },
-          data: { hash: txHash },
+    if (charge.transactions.length) {
+      updateChargeStatusOnStellar(charge.id, 'paid')
+        .then(async (txHash) => {
+          await db.chargeTransaction.update({
+            where: { id: transaction.id },
+            data: { hash: txHash },
+          })
+          console.log(`[Stellar] status de ${charge.id} atualizado para paid: ${txHash}`)
         })
-        console.log(`[Stellar] status de ${charge.id} atualizado para paid: ${txHash}`)
-      })
-      .catch((err: Error) => {
-        console.error(`[Stellar] Falha ao atualizar status ${charge.id}:`, err.message)
-      })
+        .catch((err: Error) => {
+          console.error(`[Stellar] Falha ao atualizar status ${charge.id}:`, err.message)
+        })
+    }
+
+    enqueueUsdcTransfer(charge.id)
+      .then(() => console.log(`[Queue] Job usdc-transfer enfileirado para cobrança ${charge.id}`))
+      .catch((err: Error) => console.error(`[Queue] Falha ao enfileirar transferência para ${charge.id}:`, err.message))
   }
 }
 

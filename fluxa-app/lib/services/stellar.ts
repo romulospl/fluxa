@@ -47,3 +47,8 @@ export async function updateChargeStatusOnStellar(
   const { txHash } = await stellarPost(`/charges/${chargeId}/status`, { status })
   return txHash
 }
+
+export async function transferUsdc(to: string, amount: string): Promise<string> {
+  const { txHash } = await stellarPost('/transfers', { to, amount })
+  return txHash
+}

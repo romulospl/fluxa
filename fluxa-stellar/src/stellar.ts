@@ -7,12 +7,25 @@ import {
   xdr,
   nativeToScVal,
   Contract,
+  Horizon,
+  Asset,
+  Operation,
 } from '@stellar/stellar-sdk'
 import crypto from 'crypto'
 
 const RPC_URLS: Record<string, string> = {
   testnet: 'https://soroban-testnet.stellar.org',
   mainnet: 'https://rpc.stellar.org',
+}
+
+const HORIZON_URLS: Record<string, string> = {
+  testnet: 'https://horizon-testnet.stellar.org',
+  mainnet: 'https://horizon.stellar.org',
+}
+
+const USDC_ISSUERS: Record<string, string> = {
+  testnet: 'GBBD47IF6LWK7P7MDEVSCWR7DPUWV3NY3DTQEVFL4NAT4AQH3ZLLFLA5',
+  mainnet: 'GA5ZSEJYB37JRC5AVCIA5MOP4RHTM335X2KGX3IHOJAPP5RE34K4KZVN',
 }
 
 const NETWORK_PASSPHRASES: Record<string, string> = {
@@ -124,6 +137,31 @@ export async function recordCharge(charge: {
     .build()
 
   return sendSorobanTx(server, keypair, tx)
+}
+
+export async function transferUsdc(to: string, amount: string): Promise<string> {
+  const network = process.env.STELLAR_NETWORK ?? 'testnet'
+  const secretKey = process.env.STELLAR_SECRET_KEY
+  if (!secretKey) throw new Error('STELLAR_SECRET_KEY não configurado')
+
+  const keypair = Keypair.fromSecret(secretKey)
+  const server = new Horizon.Server(HORIZON_URLS[network])
+  const account = await server.loadAccount(keypair.publicKey())
+
+  const usdc = new Asset('USDC', USDC_ISSUERS[network])
+
+  const tx = new TransactionBuilder(account, {
+    fee: '100000',
+    networkPassphrase: NETWORK_PASSPHRASES[network],
+  })
+    .addOperation(Operation.payment({ destination: to, asset: usdc, amount }))
+    .setTimeout(30)
+    .build()
+
+  tx.sign(keypair)
+
+  const result = await server.submitTransaction(tx)
+  return result.hash
 }
 
 export async function updateChargeStatus(

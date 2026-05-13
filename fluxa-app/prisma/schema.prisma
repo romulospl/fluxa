@@ -59,8 +59,10 @@ model Charge {
   paymentMethod String?   @map("payment_method")
   paymentUrl    String?   @map("payment_url")
   dueDate       DateTime? @map("due_date")
-  createdAt     DateTime  @default(now()) @map("created_at")
-  paidAt        DateTime? @map("paid_at")
+  amountUsdc     Decimal?  @map("amount_usdc") @db.Decimal(18, 6)
+  transferStatus String?   @map("transfer_status")
+  createdAt      DateTime  @default(now()) @map("created_at")
+  paidAt         DateTime? @map("paid_at")
 
   transactions ChargeTransaction[]
 
