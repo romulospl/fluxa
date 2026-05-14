@@ -72,6 +72,8 @@ export async function createCharge(
 
   const usdcRate = await getUsdcBrlRate()
   const amountUsdc = brlToUsdc(amountBrl, usdcRate)
+  const feePercent = parseFloat(process.env.FLUXA_FEE_PERCENT ?? '10')
+  const feeUsdc = amountUsdc * feePercent / 100
 
   const payment = await asaasPost('/payments', {
     customer: customerRef,
@@ -96,6 +98,8 @@ export async function createCharge(
         description,
         amountBrl,
         amountUsdc,
+        feePercent,
+        feeUsdc,
         externalId: payment.id as string,
         status: 'pending',
         paymentMethod: billingType,
@@ -108,6 +112,8 @@ export async function createCharge(
         description: true,
         amountBrl: true,
         amountUsdc: true,
+        feePercent: true,
+        feeUsdc: true,
         externalId: true,
         status: true,
         paymentMethod: true,
@@ -151,6 +157,8 @@ export async function markChargeAsPaid(externalId: string, paymentDate: string) 
     where: { externalId },
     select: {
       id: true,
+      amountBrl: true,
+      feePercent: true,
       transactions: {
         where: { hash: { not: null } },
         select: { hash: true },
@@ -170,10 +178,13 @@ export async function markChargeAsPaid(externalId: string, paymentDate: string) 
   })
 
   for (const charge of charges) {
+    const feeAmountBrl = Number(charge.amountBrl) * Number(charge.feePercent) / 100
+
     const transaction = await db.chargeTransaction.create({
       data: {
         chargeId: charge.id,
         status: 'paid',
+        feeAmountBrl,
         occurredAt: paidAt,
       },
       select: { id: true },
@@ -218,6 +229,7 @@ export async function listChargeTransactions(token: string, chargeId: string) {
       hash: true,
       amountBrl: true,
       amountUsdc: true,
+      feeAmountBrl: true,
       occurredAt: true,
     },
   })
@@ -242,6 +254,9 @@ export async function listCharges(
         number: true,
         description: true,
         amountBrl: true,
+        amountUsdc: true,
+        feePercent: true,
+        feeUsdc: true,
         externalId: true,
         status: true,
         paymentMethod: true,

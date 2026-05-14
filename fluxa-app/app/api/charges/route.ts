@@ -65,6 +65,17 @@ async function resolveToken(request: Request): Promise<string | null> {
  *                         type: string
  *                       amountBrl:
  *                         type: number
+ *                       amountUsdc:
+ *                         type: number
+ *                         nullable: true
+ *                         description: Valor total em USDC gerado pela conversão
+ *                       feePercent:
+ *                         type: number
+ *                         description: Taxa Fluxa aplicada (%)
+ *                       feeUsdc:
+ *                         type: number
+ *                         nullable: true
+ *                         description: Valor em USDC retido pela Fluxa
  *                       externalId:
  *                         type: string
  *                         nullable: true
@@ -144,6 +155,17 @@ async function resolveToken(request: Request): Promise<string | null> {
  *                   type: string
  *                 amountBrl:
  *                   type: number
+ *                 amountUsdc:
+ *                   type: number
+ *                   nullable: true
+ *                   description: Valor total em USDC gerado pela conversão
+ *                 feePercent:
+ *                   type: number
+ *                   description: Taxa Fluxa aplicada (%)
+ *                 feeUsdc:
+ *                   type: number
+ *                   nullable: true
+ *                   description: Valor em USDC retido pela Fluxa
  *                 externalId:
  *                   type: string
  *                   description: ID do pagamento no Asaas (pay_...)

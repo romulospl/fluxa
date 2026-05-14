@@ -34,6 +34,7 @@ export async function startUsdcTransferWorker(): Promise<void> {
         id: true,
         amountBrl: true,
         amountUsdc: true,
+        feePercent: true,
         user: { select: { walletAddress: true } },
       },
     })
@@ -42,8 +43,8 @@ export async function startUsdcTransferWorker(): Promise<void> {
     if (!charge.user.walletAddress) throw new Error(`Cobrança ${chargeId} sem endereço de carteira`)
     if (!charge.amountUsdc) throw new Error(`Cobrança ${chargeId} sem amountUsdc`)
 
-    // Formata com 7 casas decimais (limite da Stellar)
-    const amount = Number(charge.amountUsdc).toFixed(7)
+    const netUsdc = Number(charge.amountUsdc) * (1 - Number(charge.feePercent) / 100)
+    const amount = netUsdc.toFixed(7)
 
     const txHash = await transferUsdc(charge.user.walletAddress, amount)
 
@@ -58,7 +59,7 @@ export async function startUsdcTransferWorker(): Promise<void> {
           status: 'transfer_completed',
           hash: txHash,
           amountBrl: charge.amountBrl,
-          amountUsdc: charge.amountUsdc,
+          amountUsdc: netUsdc,
           occurredAt: new Date(),
         },
       }),
