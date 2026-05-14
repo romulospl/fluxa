@@ -1,12 +1,15 @@
 'use client'
 
-import { ExternalLink, History } from 'lucide-react'
+import { useState } from 'react'
+import { ExternalLink, History, ChevronLeft, ChevronRight } from 'lucide-react'
 import { Charge, STATUS_CONFIG } from '@/lib/types'
-import { formatBRL, formatCrypto, formatDate } from '@/lib/data'
+import { formatBRL, formatDate } from '@/lib/data'
 import { ChargeTransactionsDialog } from '@/components/dashboard/charge-transactions-dialog'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
+
+const PAGE_SIZE = 5
 
 interface ChargesTableProps {
   charges: Charge[]
@@ -14,6 +17,10 @@ interface ChargesTableProps {
 }
 
 export function ChargesTable({ charges, onViewCharge }: ChargesTableProps) {
+  const [page, setPage] = useState(1)
+
+  const totalPages = Math.max(1, Math.ceil(charges.length / PAGE_SIZE))
+  const paginated = charges.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE)
 
   return (
     <Card className="border-border bg-card">
@@ -27,14 +34,13 @@ export function ChargesTable({ charges, onViewCharge }: ChargesTableProps) {
               <tr className="border-b border-border text-left text-sm text-muted-foreground">
                 <th className="pb-3 pr-4 font-medium">Descrição</th>
                 <th className="pb-3 pr-4 font-medium">Valor (BRL)</th>
-                <th className="hidden pb-3 pr-4 font-medium sm:table-cell">Cripto</th>
                 <th className="pb-3 pr-4 font-medium">Status</th>
                 <th className="hidden pb-3 pr-4 font-medium md:table-cell">Data</th>
                 <th className="pb-3 font-medium">Ações</th>
               </tr>
             </thead>
             <tbody>
-              {charges.map((charge) => {
+              {paginated.map((charge) => {
                 const statusConfig = STATUS_CONFIG[charge.status]
 
                 return (
@@ -57,15 +63,6 @@ export function ChargesTable({ charges, onViewCharge }: ChargesTableProps) {
                     </td>
                     <td className="py-4 pr-4 font-medium text-card-foreground">
                       {formatBRL(charge.amountBRL)}
-                    </td>
-                    <td className="hidden py-4 pr-4 sm:table-cell">
-                      {charge.amountCrypto ? (
-                        <span className="font-mono text-sm text-primary">
-                          {formatCrypto(charge.amountCrypto, charge.cryptoAsset ?? '')}
-                        </span>
-                      ) : (
-                        <span className="text-sm text-muted-foreground">—</span>
-                      )}
                     </td>
                     <td className="py-4 pr-4">
                       <div className="flex flex-col gap-1">
@@ -119,6 +116,34 @@ export function ChargesTable({ charges, onViewCharge }: ChargesTableProps) {
             </tbody>
           </table>
         </div>
+
+        {totalPages > 1 && (
+          <div className="mt-4 flex items-center justify-between text-sm text-muted-foreground">
+            <span>
+              Página {page} de {totalPages}
+            </span>
+            <div className="flex gap-1">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setPage((p) => p - 1)}
+                disabled={page === 1}
+                className="h-8 w-8 p-0"
+              >
+                <ChevronLeft className="h-4 w-4" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setPage((p) => p + 1)}
+                disabled={page === totalPages}
+                className="h-8 w-8 p-0"
+              >
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
+        )}
       </CardContent>
     </Card>
   )
