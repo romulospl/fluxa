@@ -35,11 +35,16 @@ export async function startUsdcTransferWorker(): Promise<void> {
         amountBrl: true,
         amountUsdc: true,
         feePercent: true,
+        transferStatus: true,
         user: { select: { walletAddress: true } },
       },
     })
 
     if (!charge) throw new Error(`Cobrança ${chargeId} não encontrada`)
+    if (charge.transferStatus === 'completed') {
+      console.log(`[Queue] Cobrança ${chargeId} já transferida, ignorando retry`)
+      return
+    }
     if (!charge.user.walletAddress) throw new Error(`Cobrança ${chargeId} sem endereço de carteira`)
     if (!charge.amountUsdc) throw new Error(`Cobrança ${chargeId} sem amountUsdc`)
 

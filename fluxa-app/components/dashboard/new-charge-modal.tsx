@@ -29,6 +29,8 @@ function todayStr() {
   return new Date().toISOString().split('T')[0]
 }
 
+const FEE_PERCENT = Number(process.env.NEXT_PUBLIC_FLUXA_FEE_PERCENT ?? '10')
+
 export function NewChargeModal({ open, onClose, onSuccess }: NewChargeModalProps) {
   const [amount, setAmount] = useState('')
   const [description, setDescription] = useState('')
@@ -185,6 +187,22 @@ export function NewChargeModal({ open, onClose, onSuccess }: NewChargeModalProps
               ))}
             </div>
           </div>
+
+          {(() => {
+            const numAmount = parseFloat(amount.replace(/\./g, '').replace(',', '.'))
+            const hasAmount = numAmount > 0
+            const feeAmount = hasAmount ? numAmount * FEE_PERCENT / 100 : 0
+            const netAmount = hasAmount ? numAmount - feeAmount : 0
+            const fmt = (v: number) => v.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+            return (
+              <div className="flex items-center justify-between rounded-md border bg-muted/40 px-3 py-2 text-xs text-muted-foreground">
+                <span>Taxa Fluxa {FEE_PERCENT}%{hasAmount ? ` · − R$ ${fmt(feeAmount)}` : ''}</span>
+                <span className="font-medium text-foreground">
+                  {hasAmount ? `≈ R$ ${fmt(netAmount)} em USDC` : 'Você recebe 90% em USDC'}
+                </span>
+              </div>
+            )
+          })()}
 
           {error && (
             <div className="flex items-center gap-2 text-sm text-destructive">
