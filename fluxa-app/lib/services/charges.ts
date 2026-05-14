@@ -211,6 +211,32 @@ export async function markChargeAsPaid(externalId: string, paymentDate: string) 
   }
 }
 
+export async function markChargeAsOverdue(externalId: string) {
+  const charges = await db.charge.findMany({
+    where: { externalId, status: 'pending' },
+    select: { id: true },
+  })
+
+  if (!charges.length) return
+
+  const overdueAt = new Date()
+
+  await db.charge.updateMany({
+    where: { externalId },
+    data: { status: 'overdue' },
+  })
+
+  for (const charge of charges) {
+    await db.chargeTransaction.create({
+      data: {
+        chargeId: charge.id,
+        status: 'overdue',
+        occurredAt: overdueAt,
+      },
+    })
+  }
+}
+
 export async function listChargeTransactions(token: string, chargeId: string) {
   const decoded = await verifyToken(token)
 

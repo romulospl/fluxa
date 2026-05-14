@@ -1,4 +1,4 @@
-export type ChargeStatus = 'pending' | 'paid' | 'converting' | 'completed'
+export type ChargeStatus = 'pending' | 'paid' | 'converting' | 'completed' | 'overdue'
 
 export interface Charge {
   id: string
@@ -60,4 +60,5 @@ export const STATUS_CONFIG: Record<ChargeStatus, { label: string; color: string;
   paid: { label: 'Pago', color: 'text-chart-2', bgColor: 'bg-chart-2/10' },
   converting: { label: 'Em Conversão', color: 'text-chart-1', bgColor: 'bg-chart-1/10' },
   completed: { label: 'Finalizado', color: 'text-success', bgColor: 'bg-success/10' },
+  overdue: { label: 'Vencido', color: 'text-destructive', bgColor: 'bg-destructive/10' },
 }

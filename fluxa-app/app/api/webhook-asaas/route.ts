@@ -1,4 +1,4 @@
-import { markChargeAsPaid } from '@/lib/services/charges'
+import { markChargeAsPaid, markChargeAsOverdue } from '@/lib/services/charges'
 
 const PAYMENT_EVENTS = new Set(['PAYMENT_RECEIVED', 'PAYMENT_CONFIRMED'])
 
@@ -8,7 +8,7 @@ const PAYMENT_EVENTS = new Set(['PAYMENT_RECEIVED', 'PAYMENT_CONFIRMED'])
  *   post:
  *     tags: [Webhook]
  *     summary: Recebe eventos do Asaas
- *     description: Processa eventos de pagamento enviados pelo Asaas e atualiza o status das cobranças no banco.
+ *     description: Processa eventos de pagamento enviados pelo Asaas e atualiza o status das cobranças no banco. Eventos suportados: PAYMENT_RECEIVED, PAYMENT_CONFIRMED, PAYMENT_OVERDUE.
  *     requestBody:
  *       required: true
  *       content:
@@ -38,6 +38,14 @@ export async function POST(request: Request) {
       await markChargeAsPaid(payment.id, payment.paymentDate)
     } catch (err) {
       console.error('[webhook-asaas] Erro ao atualizar cobrança:', payment.id, err)
+    }
+  }
+
+  if (event === 'PAYMENT_OVERDUE' && payment?.id) {
+    try {
+      await markChargeAsOverdue(payment.id)
+    } catch (err) {
+      console.error('[webhook-asaas] Erro ao marcar cobrança como vencida:', payment.id, err)
     }
   }
 
