@@ -47,6 +47,29 @@ export const CRYPTO_ASSETS = [
   { asset: 'USDC', symbol: 'USDC', icon: '$' },
 ] as const
 
+export interface WalletTransactionCharge {
+  id: string
+  number: number
+  description: string
+  amountBrl: number
+  amountUsdc: number | null
+  status: string
+  paidAt: string | null
+}
+
+export interface WalletTransaction {
+  id: string
+  hash: string
+  pagingToken: string
+  amount: string
+  direction: 'in' | 'out'
+  from: string
+  to: string
+  createdAt: string
+  isFluxaTransaction: boolean
+  charge?: WalletTransactionCharge
+}
+
 export interface ChargeStats {
   total: number
   totalBRL: number

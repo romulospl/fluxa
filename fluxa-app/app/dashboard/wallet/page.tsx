@@ -10,6 +10,7 @@ import { LoadingButton } from '@/components/ui/loading-button'
 import { validateWalletAddress } from '@/lib/data'
 import { useCopyToClipboard } from '@/hooks/use-copy-to-clipboard'
 import { toastSuccess, toastError } from '@/lib/toast'
+import { WalletTransactionsList } from '@/components/dashboard/wallet-transactions-list'
 
 export default function WalletPage() {
   const [walletAddress, setWalletAddress] = useState<string | null>(null)
@@ -154,6 +155,22 @@ export default function WalletPage() {
           </ul>
         </CardContent>
       </Card>
+
+      {walletAddress && (
+        <Card className="border-border bg-card">
+          <CardHeader>
+            <CardTitle className="text-base text-card-foreground">
+              Histórico de Transações
+            </CardTitle>
+            <CardDescription>
+              Transações USDC na rede Stellar. As originadas pelo Fluxa exibem a cobrança correspondente.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <WalletTransactionsList walletAddress={walletAddress} />
+          </CardContent>
+        </Card>
+      )}
     </div>
   )
 }
