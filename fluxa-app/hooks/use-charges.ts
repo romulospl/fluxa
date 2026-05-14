@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useCallback, useEffect } from 'react'
-import { Charge } from '@/lib/types'
+import { Charge, ChargeStats } from '@/lib/types'
 
 function mapCharge(c: {
   id: string
@@ -27,12 +27,21 @@ function mapCharge(c: {
   }
 }
 
+const emptyStats: ChargeStats = {
+  total: 0,
+  totalBRL: 0,
+  paidBRL: 0,
+  pendingBRL: 0,
+  pending: 0,
+}
+
 export function useCharges(limit = 10) {
   const [charges, setCharges] = useState<Charge[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [page, setPage] = useState(1)
   const [totalPages, setTotalPages] = useState(1)
   const [total, setTotal] = useState(0)
+  const [stats, setStats] = useState<ChargeStats>(emptyStats)
 
   const fetchPage = useCallback(async (pageNum: number) => {
     setIsLoading(true)
@@ -51,14 +60,23 @@ export function useCharges(limit = 10) {
     }
   }, [limit])
 
+  const fetchStats = useCallback(async () => {
+    const res = await fetch('/api/charges/stats', { credentials: 'include' })
+    if (!res.ok) return
+    const data: ChargeStats = await res.json()
+    setStats(data)
+  }, [])
+
   useEffect(() => {
     fetchPage(1)
-  }, [fetchPage])
+    fetchStats()
+  }, [fetchPage, fetchStats])
 
   const addCharge = useCallback((charge: Charge) => {
     setCharges(prev => [charge, ...prev])
     setTotal(prev => prev + 1)
-  }, [])
+    fetchStats()
+  }, [fetchStats])
 
   const updateChargeStatus = useCallback((id: string, status: Charge['status']) => {
     setCharges(prev => prev.map(c => c.id === id ? { ...c, status } : c))
@@ -67,16 +85,6 @@ export function useCharges(limit = 10) {
   const getChargeById = useCallback((id: string) => {
     return charges.find(c => c.id === id)
   }, [charges])
-
-  const stats = {
-    total,
-    pending: charges.filter(c => c.status === 'pending').length,
-    paid: charges.filter(c => c.status === 'paid').length,
-    converting: charges.filter(c => c.status === 'converting').length,
-    completed: charges.filter(c => c.status === 'completed').length,
-    totalBRL: charges.reduce((acc, c) => acc + c.amountBRL, 0),
-    completedBRL: charges.filter(c => c.status === 'completed').reduce((acc, c) => acc + c.amountBRL, 0),
-  }
 
   return {
     charges,

@@ -3,6 +3,7 @@ import { verifyToken } from '@/lib/services/auth'
 import { recordChargeOnStellar, updateChargeStatusOnStellar } from '@/lib/services/stellar'
 import { getUsdcBrlRate, brlToUsdc } from '@/lib/services/exchange'
 import { enqueueUsdcTransfer } from '@/lib/queue'
+import type { ChargeStats } from '@/lib/types'
 
 const ASAAS_BASE_URL = 'https://sandbox.asaas.com/api/v3'
 
@@ -275,4 +276,30 @@ export async function listCharges(
     limit,
     totalPages: Math.ceil(total / limit),
   }
+}
+
+export async function getChargeStats(token: string): Promise<ChargeStats> {
+  const decoded = await verifyToken(token)
+
+  const groups = await db.charge.groupBy({
+    by: ['status'],
+    where: { userId: decoded.userId },
+    _count: { _all: true },
+    _sum: { amountBrl: true },
+  })
+
+  let total = 0, totalBRL = 0, paidBRL = 0, pendingBRL = 0, pending = 0
+
+  for (const g of groups) {
+    const count = g._count._all
+    const sum = Number(g._sum.amountBrl ?? 0)
+    total += count
+    totalBRL += sum
+    if (g.status === 'pending') { pending = count; pendingBRL = sum }
+    if (g.status === 'paid' || g.status === 'converting' || g.status === 'completed') {
+      paidBRL += sum
+    }
+  }
+
+  return { total, totalBRL, paidBRL, pendingBRL, pending }
 }

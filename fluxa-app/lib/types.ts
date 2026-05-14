@@ -47,6 +47,14 @@ export const CRYPTO_ASSETS = [
   { asset: 'USDC', symbol: 'USDC', icon: '$' },
 ] as const
 
+export interface ChargeStats {
+  total: number
+  totalBRL: number
+  paidBRL: number
+  pendingBRL: number
+  pending: number
+}
+
 export const STATUS_CONFIG: Record<ChargeStatus, { label: string; color: string; bgColor: string }> = {
   pending: { label: 'Pendente', color: 'text-warning', bgColor: 'bg-warning/10' },
   paid: { label: 'Pago', color: 'text-chart-2', bgColor: 'bg-chart-2/10' },

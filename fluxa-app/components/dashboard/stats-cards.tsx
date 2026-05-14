@@ -1,20 +1,12 @@
 'use client'
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { TrendingUp, TrendingDown, DollarSign, Clock, CheckCircle2, RefreshCw } from 'lucide-react'
+import { DollarSign, Clock, CheckCircle2, AlertCircle } from 'lucide-react'
 import { formatBRL } from '@/lib/data'
-import { cn } from '@/lib/utils'
+import { ChargeStats } from '@/lib/types'
 
 interface StatsCardsProps {
-  stats: {
-    total: number
-    pending: number
-    paid: number
-    converting: number
-    completed: number
-    totalBRL: number
-    completedBRL: number
-  }
+  stats: ChargeStats
 }
 
 export function StatsCards({ stats }: StatsCardsProps) {
@@ -24,32 +16,24 @@ export function StatsCards({ stats }: StatsCardsProps) {
       value: formatBRL(stats.totalBRL),
       description: `${stats.total} cobranças criadas`,
       icon: DollarSign,
-      trend: '+12.5%',
-      trendUp: true,
     },
     {
-      title: 'Convertido',
-      value: formatBRL(stats.completedBRL),
-      description: `${stats.completed} finalizadas`,
+      title: 'Cobranças Pagas',
+      value: formatBRL(stats.paidBRL),
+      description: 'Pagamentos confirmados',
       icon: CheckCircle2,
-      trend: '+8.2%',
-      trendUp: true,
+    },
+    {
+      title: 'Cobranças Pendentes',
+      value: formatBRL(stats.pendingBRL),
+      description: 'Aguardando pagamento',
+      icon: AlertCircle,
     },
     {
       title: 'Pendentes',
       value: stats.pending.toString(),
-      description: 'Aguardando pagamento',
+      description: 'cobranças aguardando',
       icon: Clock,
-      trend: '-2',
-      trendUp: false,
-    },
-    {
-      title: 'Em Conversão',
-      value: stats.converting.toString(),
-      description: 'Processando cripto',
-      icon: RefreshCw,
-      trend: '+1',
-      trendUp: true,
     },
   ]
 
@@ -65,20 +49,7 @@ export function StatsCards({ stats }: StatsCardsProps) {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-card-foreground">{card.value}</div>
-            <div className="flex items-center gap-2 text-xs text-muted-foreground">
-              <span className={cn(
-                'flex items-center gap-0.5',
-                card.trendUp ? 'text-success' : 'text-destructive'
-              )}>
-                {card.trendUp ? (
-                  <TrendingUp className="h-3 w-3" />
-                ) : (
-                  <TrendingDown className="h-3 w-3" />
-                )}
-                {card.trend}
-              </span>
-              <span>{card.description}</span>
-            </div>
+            <p className="text-xs text-muted-foreground">{card.description}</p>
           </CardContent>
         </Card>
       ))}
