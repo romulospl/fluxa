@@ -72,7 +72,7 @@ export async function createCharge(
 
   const usdcRate = await getUsdcBrlRate()
   const amountUsdc = brlToUsdc(amountBrl, usdcRate)
-  const feePercent = parseFloat(process.env.FLUXA_FEE_PERCENT ?? '10')
+  const feePercent = parseFloat(process.env.NEXT_PUBLIC_FLUXA_FEE_PERCENT ?? '10')
   const feeUsdc = amountUsdc * feePercent / 100
 
   const payment = await asaasPost('/payments', {
