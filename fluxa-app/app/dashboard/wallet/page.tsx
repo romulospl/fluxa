@@ -12,6 +12,8 @@ import { useCopyToClipboard } from '@/hooks/use-copy-to-clipboard'
 import { toastSuccess, toastError } from '@/lib/toast'
 import { WalletTransactionsList } from '@/components/dashboard/wallet-transactions-list'
 
+const STELLAR_ADDRESS_REGEX = /^G[A-Z2-7]{55}$/
+
 export default function WalletPage() {
   const [walletAddress, setWalletAddress] = useState<string | null>(null)
   const [isLoadingUser, setIsLoadingUser] = useState(true)
@@ -19,6 +21,8 @@ export default function WalletPage() {
   const [isSaving, setIsSaving] = useState(false)
   const [newAddress, setNewAddress] = useState('')
   const [error, setError] = useState('')
+  const [usdcBalance, setUsdcBalance] = useState<string | null>(null)
+  const [isLoadingBalance, setIsLoadingBalance] = useState(false)
   const { copy, isCopied } = useCopyToClipboard()
 
   useEffect(() => {
@@ -34,6 +38,22 @@ export default function WalletPage() {
     }
     loadWallet()
   }, [])
+
+  useEffect(() => {
+    if (!walletAddress || !STELLAR_ADDRESS_REGEX.test(walletAddress)) return
+    async function loadBalance() {
+      setIsLoadingBalance(true)
+      try {
+        const res = await fetch('/api/wallet/balance')
+        if (!res.ok) return
+        const data = await res.json()
+        setUsdcBalance(data.balance)
+      } finally {
+        setIsLoadingBalance(false)
+      }
+    }
+    loadBalance()
+  }, [walletAddress])
 
   const handleSaveAddress = async () => {
     const trimmedAddress = newAddress.trim()
@@ -143,6 +163,31 @@ export default function WalletPage() {
           )}
         </CardContent>
       </Card>
+
+      {walletAddress && STELLAR_ADDRESS_REGEX.test(walletAddress) && (
+        <Card className="border-border bg-card">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-card-foreground">
+              Saldo USDC
+            </CardTitle>
+            <CardDescription>Saldo disponível na rede Stellar</CardDescription>
+          </CardHeader>
+          <CardContent>
+            {isLoadingBalance ? (
+              <div className="flex items-center gap-2 text-muted-foreground">
+                <Loader2 className="h-4 w-4 animate-spin" />
+                <span className="text-sm">Consultando saldo...</span>
+              </div>
+            ) : (
+              <p className="text-3xl font-bold text-foreground">
+                {usdcBalance !== null
+                  ? `${parseFloat(usdcBalance).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 7 })} USDC`
+                  : '—'}
+              </p>
+            )}
+          </CardContent>
+        </Card>
+      )}
 
       <Card className="border-border bg-card">
         <CardHeader>
