@@ -161,6 +161,11 @@ export default function WalletPage() {
               </div>
             </div>
           )}
+
+          <div className="mt-6 space-y-1.5 text-[11px] leading-relaxed text-muted-foreground/60">
+            <p>• Verifique o endereço antes de salvar. Transações são irreversíveis.</p>
+            <p>• A carteira precisa estar em trust line para USDC (rede Stellar).</p>
+          </div>
         </CardContent>
       </Card>
 
@@ -170,7 +175,7 @@ export default function WalletPage() {
             <CardTitle className="flex items-center gap-2 text-card-foreground">
               Saldo USDC
             </CardTitle>
-            <CardDescription>Saldo disponível na rede Stellar</CardDescription>
+            {/* <CardDescription>Saldo disponível</CardDescription> */}
           </CardHeader>
           <CardContent>
             {isLoadingBalance ? (
@@ -188,18 +193,6 @@ export default function WalletPage() {
           </CardContent>
         </Card>
       )}
-
-      <Card className="border-border bg-card">
-        <CardHeader>
-          <CardTitle className="text-base text-card-foreground">Importante</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <ul className="space-y-2 text-sm text-muted-foreground">
-            <li>• Verifique o endereço antes de salvar</li>
-            <li>• Transações são irreversíveis</li>
-          </ul>
-        </CardContent>
-      </Card>
 
       {walletAddress && (
         <Card className="border-border bg-card">
