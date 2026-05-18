@@ -1,6 +1,7 @@
 import { db } from '@/lib/db'
 import bcrypt from 'bcrypt'
 import jwt from 'jsonwebtoken'
+import { STELLAR_ADDRESS_REGEX, validateUsdcTrustline } from '@/lib/stellar'
 
 export async function registerUser({ name, email, password, walletAddress, cnpj, address }: any) {
   const existingUser = await db.user.findUnique({ where: { email } })
@@ -9,6 +10,10 @@ export async function registerUser({ name, email, password, walletAddress, cnpj,
   if (cnpj) {
     const existingCnpj = await db.user.findUnique({ where: { cnpj } })
     if (existingCnpj) throw new Error('Este CNPJ já está cadastrado')
+  }
+
+  if (walletAddress && STELLAR_ADDRESS_REGEX.test(walletAddress)) {
+    await validateUsdcTrustline(walletAddress)
   }
 
   const hashedPassword = await bcrypt.hash(password, 10)
@@ -186,6 +191,10 @@ export async function changePassword(
 
 export async function updateWalletAddress(token: string, walletAddress: string) {
   const decoded = await verifyToken(token)
+
+  if (STELLAR_ADDRESS_REGEX.test(walletAddress)) {
+    await validateUsdcTrustline(walletAddress)
+  }
 
   const user = await db.user.update({
     where: { id: decoded.userId },

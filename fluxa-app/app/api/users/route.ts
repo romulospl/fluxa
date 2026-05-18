@@ -73,7 +73,7 @@ export async function POST(request: Request) {
     const user = await registerUser({ name, email, password, walletAddress, cnpj, address })
     return NextResponse.json(user, { status: 201 })
   } catch (error: any) {
-    if (error.message === 'Este e-mail já está cadastrado') {
+    if (error.message === 'Este e-mail já está cadastrado' || error.name === 'TrustlineError') {
       return NextResponse.json({ error: error.message }, { status: 400 })
     }
 

@@ -71,6 +71,10 @@ export async function PATCH(request: Request) {
       return NextResponse.json({ error: error.message }, { status: 401 })
     }
 
+    if (error.name === 'TrustlineError') {
+      return NextResponse.json({ error: error.message }, { status: 400 })
+    }
+
     console.error('Erro na rota PATCH /api/users/wallet:', error)
 
     const errorMessage = process.env.NODE_ENV === 'development'
