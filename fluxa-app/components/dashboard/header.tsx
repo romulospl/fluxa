@@ -1,8 +1,7 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { useTheme } from 'next-themes'
-import { Menu, Bell, Sun, Moon, X, Zap } from 'lucide-react'
+import { useState } from 'react'
+import { Menu, X, Zap } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { MobileNav } from './mobile-nav'
 
@@ -12,10 +11,6 @@ interface HeaderProps {
 
 export function Header({ title }: HeaderProps) {
   const [mobileNavOpen, setMobileNavOpen] = useState(false)
-  const [mounted, setMounted] = useState(false)
-  const { theme, setTheme } = useTheme()
-
-  useEffect(() => setMounted(true), [])
 
   return (
     <>
@@ -45,27 +40,6 @@ export function Header({ title }: HeaderProps) {
           )}
         </div>
 
-        {/* Right side actions */}
-        <div className="flex items-center gap-2">
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
-            className="hidden md:flex"
-          >
-            {mounted && theme === 'dark' ? (
-              <Sun className="h-5 w-5" />
-            ) : (
-              <Moon className="h-5 w-5" />
-            )}
-            <span className="sr-only">Alternar tema</span>
-          </Button>
-          <Button variant="ghost" size="icon" className="relative">
-            <Bell className="h-5 w-5" />
-            <span className="absolute -right-0.5 -top-0.5 h-2 w-2 rounded-full bg-primary" />
-            <span className="sr-only">Notificações</span>
-          </Button>
-        </div>
       </header>
 
       {/* Mobile Navigation */}

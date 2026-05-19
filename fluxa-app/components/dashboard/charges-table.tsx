@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { ExternalLink, History, ChevronLeft, ChevronRight } from 'lucide-react'
+import { ExternalLink, History, ChevronLeft, ChevronRight, RefreshCw } from 'lucide-react'
 import { Charge, STATUS_CONFIG } from '@/lib/types'
 import { formatBRL, formatDate } from '@/lib/data'
 import { ChargeTransactionsDialog } from '@/components/dashboard/charge-transactions-dialog'
@@ -14,9 +14,11 @@ const PAGE_SIZE = 5
 interface ChargesTableProps {
   charges: Charge[]
   onViewCharge?: (charge: Charge) => void
+  onRefresh?: () => void
+  isRefreshing?: boolean
 }
 
-export function ChargesTable({ charges, onViewCharge }: ChargesTableProps) {
+export function ChargesTable({ charges, onViewCharge, onRefresh, isRefreshing }: ChargesTableProps) {
   const [page, setPage] = useState(1)
 
   const totalPages = Math.max(1, Math.ceil(charges.length / PAGE_SIZE))
@@ -24,8 +26,18 @@ export function ChargesTable({ charges, onViewCharge }: ChargesTableProps) {
 
   return (
     <Card className="border-border bg-card">
-      <CardHeader>
+      <CardHeader className="flex flex-row items-center justify-between pb-2">
         <CardTitle className="text-card-foreground">Cobranças Recentes</CardTitle>
+        {onRefresh && (
+          <button
+            onClick={onRefresh}
+            disabled={isRefreshing}
+            className="text-muted-foreground hover:text-foreground transition-colors disabled:opacity-40"
+            aria-label="Atualizar cobranças"
+          >
+            <RefreshCw className={cn('h-4 w-4', isRefreshing && 'animate-spin')} />
+          </button>
+        )}
       </CardHeader>
       <CardContent>
         <div className="overflow-x-auto">

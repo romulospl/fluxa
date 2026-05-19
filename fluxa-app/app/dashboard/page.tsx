@@ -10,7 +10,7 @@ import { NewChargeModal } from '@/components/dashboard/new-charge-modal'
 import { Button } from '@/components/ui/button'
 
 export default function DashboardPage() {
-  const { charges, stats, goToPage } = useCharges(5)
+  const { charges, stats, isLoading, goToPage } = useCharges(5)
   const [isModalOpen, setIsModalOpen] = useState(false)
 
   return (
@@ -35,7 +35,7 @@ export default function DashboardPage() {
       {/* Main Grid */}
       <div className="grid gap-6 xl:grid-cols-3">
         <div className="xl:col-span-2">
-          <ChargesTable charges={charges} />
+          <ChargesTable charges={charges} onRefresh={() => goToPage(1)} isRefreshing={isLoading} />
         </div>
         <div>
           <QuotesCard />
