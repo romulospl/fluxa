@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { AlertCircle, Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -38,6 +38,15 @@ export function NewChargeModal({ open, onClose, onSuccess }: NewChargeModalProps
   const [dueDate, setDueDate] = useState(defaultDueDate)
   const [error, setError] = useState('')
   const [isLoading, setIsLoading] = useState(false)
+  const [usdcRate, setUsdcRate] = useState<number | null>(null)
+
+  useEffect(() => {
+    if (!open) return
+    fetch('/api/exchange/rate')
+      .then((r) => r.json())
+      .then((d) => setUsdcRate(d.rate ?? null))
+      .catch(() => setUsdcRate(null))
+  }, [open])
 
   const handleAmountChange = (value: string) => {
     const numericValue = value.replace(/\D/g, '')
@@ -192,14 +201,25 @@ export function NewChargeModal({ open, onClose, onSuccess }: NewChargeModalProps
             const numAmount = parseFloat(amount.replace(/\./g, '').replace(',', '.'))
             const hasAmount = numAmount > 0
             const feeAmount = hasAmount ? numAmount * FEE_PERCENT / 100 : 0
-            const netAmount = hasAmount ? numAmount - feeAmount : 0
-            const fmt = (v: number) => v.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+            const netBrl = hasAmount ? numAmount - feeAmount : 0
+            const netUsdc = hasAmount && usdcRate ? netBrl / usdcRate : null
+            const fmtBrl = (v: number) => v.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
             return (
-              <div className="flex items-center justify-between rounded-md border bg-muted/40 px-3 py-2 text-xs text-muted-foreground">
-                <span>Taxa Fluxa {FEE_PERCENT}%{hasAmount ? ` · − R$ ${fmt(feeAmount)}` : ''}</span>
-                <span className="font-medium text-foreground">
-                  {hasAmount ? `≈ R$ ${fmt(netAmount)} em USDC` : 'Você recebe 90% em USDC'}
-                </span>
+              <div className="rounded-md border bg-muted/40 px-3 py-2.5 space-y-1.5">
+                <div className="flex items-center justify-between text-xs text-muted-foreground">
+                  <span>Taxa Fluxa ({FEE_PERCENT}%)</span>
+                  <span>{hasAmount ? `− R$ ${fmtBrl(feeAmount)}` : `${FEE_PERCENT}% do valor`}</span>
+                </div>
+                <div className="flex items-center justify-between text-xs">
+                  <span className="text-muted-foreground">Você vai receber aproximadamente</span>
+                  <span className="font-semibold text-foreground">
+                    {netUsdc !== null
+                      ? `${netUsdc.toFixed(6)} USDC`
+                      : hasAmount
+                        ? `≈ R$ ${fmtBrl(netBrl)} em USDC`
+                        : '—'}
+                  </span>
+                </div>
               </div>
             )
           })()}
