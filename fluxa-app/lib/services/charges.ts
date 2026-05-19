@@ -72,9 +72,10 @@ export async function createCharge(
   }
 
   const usdcRate = await getUsdcBrlRate()
-  const amountUsdc = brlToUsdc(amountBrl, usdcRate)
   const feePercent = parseFloat(process.env.NEXT_PUBLIC_FLUXA_FEE_PERCENT ?? '10')
-  const feeUsdc = amountUsdc * feePercent / 100
+  const feeBrl = amountBrl * feePercent / 100
+  const netBrl = amountBrl - feeBrl
+  const amountUsdc = brlToUsdc(netBrl, usdcRate)
 
   const payment = await asaasPost('/payments', {
     customer: customerRef,
@@ -100,7 +101,7 @@ export async function createCharge(
         amountBrl,
         amountUsdc,
         feePercent,
-        feeUsdc,
+        feeBrl,
         externalId: payment.id as string,
         status: 'pending',
         paymentMethod: billingType,
@@ -114,7 +115,7 @@ export async function createCharge(
         amountBrl: true,
         amountUsdc: true,
         feePercent: true,
-        feeUsdc: true,
+        feeBrl: true,
         externalId: true,
         status: true,
         paymentMethod: true,
@@ -283,7 +284,7 @@ export async function listCharges(
         amountBrl: true,
         amountUsdc: true,
         feePercent: true,
-        feeUsdc: true,
+        feeBrl: true,
         externalId: true,
         status: true,
         paymentMethod: true,
