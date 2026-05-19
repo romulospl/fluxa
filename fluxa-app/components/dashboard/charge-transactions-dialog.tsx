@@ -81,8 +81,8 @@ export function ChargeTransactionsDialog({
             </p>
           ) : (
             <ol className="relative ml-3 space-y-5 border-l border-border">
-              {transactions.map((tx, i) => {
-                const isLast = i === transactions.length - 1
+              {[...transactions].reverse().map((tx, i) => {
+                const isFirst = i === 0
                 const statusConfig = STATUS_CONFIG[tx.status as keyof typeof STATUS_CONFIG]
 
                 return (
@@ -90,7 +90,7 @@ export function ChargeTransactionsDialog({
                     <span
                       className={cn(
                         'absolute -left-1.5 flex h-3 w-3 items-center justify-center rounded-full border border-background',
-                        isLast ? 'bg-primary' : 'bg-muted-foreground/50',
+                        isFirst ? 'bg-primary' : 'bg-muted-foreground/50',
                       )}
                     />
                     <div className="flex flex-col gap-1">
