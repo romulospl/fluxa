@@ -17,9 +17,10 @@ interface Props {
   onOpenChange: (open: boolean) => void
   hash: string
   charge: WalletTransactionCharge
+  transactionDate: string
 }
 
-export function WalletChargeDialog({ open, onOpenChange, hash, charge }: Props) {
+export function WalletChargeDialog({ open, onOpenChange, hash, charge, transactionDate }: Props) {
   const statusConfig = STATUS_CONFIG[charge.status as keyof typeof STATUS_CONFIG]
 
   return (
@@ -29,10 +30,27 @@ export function WalletChargeDialog({ open, onOpenChange, hash, charge }: Props) 
           <DialogTitle className="text-base leading-snug">
             Cobrança #{charge.number}
           </DialogTitle>
-          <p className="text-sm text-muted-foreground">{charge.description}</p>
         </DialogHeader>
 
         <div className="mt-1 space-y-3">
+          <div className="flex flex-col gap-1 text-sm">
+            <span className="text-muted-foreground">Descrição</span>
+            <span className="font-medium">{charge.description}</span>
+          </div>
+
+          <div className="flex items-center justify-between text-sm">
+            <span className="text-muted-foreground">Data</span>
+            <span>
+              {new Intl.DateTimeFormat('pt-BR', {
+                day: '2-digit',
+                month: '2-digit',
+                year: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit',
+              }).format(new Date(transactionDate))}
+            </span>
+          </div>
+
           <div className="flex items-center justify-between text-sm">
             <span className="text-muted-foreground">Valor em BRL</span>
             <span className="font-medium">{formatBRL(charge.amountBrl)}</span>

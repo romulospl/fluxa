@@ -169,6 +169,7 @@ export function WalletTransactionsList({ walletAddress }: Props) {
           onOpenChange={setDialogOpen}
           hash={selectedTx.hash}
           charge={selectedTx.charge as WalletTransactionCharge}
+          transactionDate={selectedTx.createdAt}
         />
       )}
     </div>
