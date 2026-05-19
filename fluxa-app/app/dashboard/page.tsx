@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Plus } from 'lucide-react'
 import { useCharges } from '@/hooks/use-charges'
 import { StatsCards } from '@/components/dashboard/stats-cards'
@@ -12,6 +12,11 @@ import { Button } from '@/components/ui/button'
 export default function DashboardPage() {
   const { charges, stats, isLoading, goToPage } = useCharges(5)
   const [isModalOpen, setIsModalOpen] = useState(false)
+
+  useEffect(() => {
+    const id = setInterval(() => goToPage(1), 5 * 60 * 1000)
+    return () => clearInterval(id)
+  }, [goToPage])
 
   return (
     <div className="space-y-6">
