@@ -83,13 +83,13 @@ export default function ChargesPage() {
       </div>
 
       {/* Charges Table */}
-      {isLoading ? (
+      {isLoading && charges.length === 0 ? (
         <div className="flex items-center justify-center py-16">
           <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
         </div>
       ) : (
         <>
-          <ChargesTable charges={filteredCharges} />
+          <ChargesTable charges={filteredCharges} onRefresh={() => goToPage(page)} isRefreshing={isLoading} />
 
           {filteredCharges.length === 0 && (
             <div className="flex flex-col items-center justify-center rounded-lg border border-dashed border-border py-12">
@@ -109,7 +109,7 @@ export default function ChargesPage() {
       )}
 
       {/* Pagination */}
-      {!isLoading && totalPages > 1 && (
+      {totalPages > 1 && (
         <Pagination>
           <PaginationContent>
             <PaginationItem>
