@@ -39,13 +39,24 @@ export function NewChargeModal({ open, onClose, onSuccess }: NewChargeModalProps
   const [error, setError] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const [usdcRate, setUsdcRate] = useState<number | null>(null)
+  const [rateUpdatedAt, setRateUpdatedAt] = useState<Date | null>(null)
 
   useEffect(() => {
     if (!open) return
-    fetch('/api/exchange/rate')
-      .then((r) => r.json())
-      .then((d) => setUsdcRate(d.rate ?? null))
-      .catch(() => setUsdcRate(null))
+
+    const fetchRate = () => {
+      fetch('/api/exchange/rate')
+        .then((r) => r.json())
+        .then((d) => {
+          setUsdcRate(d.rate ?? null)
+          setRateUpdatedAt(new Date())
+        })
+        .catch(() => setUsdcRate(null))
+    }
+
+    fetchRate()
+    const interval = setInterval(fetchRate, 60_000)
+    return () => clearInterval(interval)
   }, [open])
 
   const handleAmountChange = (value: string) => {
@@ -220,6 +231,11 @@ export function NewChargeModal({ open, onClose, onSuccess }: NewChargeModalProps
                         : '—'}
                   </span>
                 </div>
+                {rateUpdatedAt && (
+                  <div className="text-[10px] text-muted-foreground/60 text-right">
+                    cotação atualizada às {rateUpdatedAt.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+                  </div>
+                )}
               </div>
             )
           })()}
