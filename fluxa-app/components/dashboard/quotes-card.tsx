@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState, useCallback } from 'react'
+import axios from 'axios'
 import { RefreshCw } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -55,9 +56,8 @@ export function QuotesCard() {
   const fetchPrices = useCallback(async (showSpinner = false) => {
     if (showSpinner) setIsRefreshing(true)
     try {
-      const res = await fetch(API_URL, { cache: 'no-store' })
-      if (!res.ok) throw new Error()
-      const data: BinanceTicker[] = await res.json()
+      const res = await axios.get(API_URL)
+      const data: BinanceTicker[] = res.data
       setCoins(parsePrices(data))
       setError(false)
     } catch {

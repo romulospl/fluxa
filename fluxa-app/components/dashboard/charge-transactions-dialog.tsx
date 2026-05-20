@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import api from '@/lib/api'
 import { ExternalLink, Loader2 } from 'lucide-react'
 import {
   Dialog,
@@ -50,8 +51,8 @@ export function ChargeTransactionsDialog({
   useEffect(() => {
     if (!open) return
     setIsLoading(true)
-    fetch(`/api/charges/${chargeId}/transactions`, { credentials: 'include' })
-      .then((r) => r.json())
+    api.get(`/api/charges/${chargeId}/transactions`, { withCredentials: true })
+      .then((r) => r.data)
       .then((data) => setTransactions(Array.isArray(data) ? data : []))
       .catch(() => setTransactions([]))
       .finally(() => setIsLoading(false))

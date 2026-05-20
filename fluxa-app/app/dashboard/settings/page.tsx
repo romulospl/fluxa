@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import api from '@/lib/api'
 import { User, Shield, Save, MapPin, Loader2, Pencil, X } from 'lucide-react'
 import { PasswordInput } from '@/components/ui/password-input'
 import { LoadingButton } from '@/components/ui/loading-button'
@@ -73,9 +74,8 @@ export default function SettingsPage() {
   useEffect(() => {
     async function loadUser() {
       try {
-        const res = await fetch('/api/users/current')
-        if (!res.ok) return
-        const data: UserData = await res.json()
+        const res = await api.get('/api/users/current')
+        const data: UserData = res.data
         setCnpj(data.cnpj ? formatCNPJ(data.cnpj) : '')
         const fields = {
           name: data.name ?? '',
@@ -135,17 +135,12 @@ export default function SettingsPage() {
   const handleSaveProfile = (e: React.FormEvent) => {
     e.preventDefault()
     saveProfile(async () => {
-      const res = await fetch('/api/users', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          name,
-          email,
-          address: { zipCode: zipCode.replace(/\D/g, ''), street, number, complement: complement || null, neighborhood, city, state },
-        }),
+      const res = await api.put('/api/users', {
+        name,
+        email,
+        address: { zipCode: zipCode.replace(/\D/g, ''), street, number, complement: complement || null, neighborhood, city, state },
       })
-      const data = await res.json()
-      if (!res.ok) throw new Error(data.error || 'Erro ao salvar dados.')
+      const data = res.data
       setIsEditing(false)
       toastSuccess('Dados salvos com sucesso!')
     })
@@ -162,13 +157,8 @@ export default function SettingsPage() {
       return
     }
     savePassword(async () => {
-      const res = await fetch('/api/users/password', {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ currentPassword, newPassword }),
-      })
-      const data = await res.json()
-      if (!res.ok) throw new Error(data.error || 'Erro ao alterar senha.')
+      const res = await api.patch('/api/users/password', { currentPassword, newPassword })
+      const data = res.data
       setCurrentPassword('')
       setNewPassword('')
       setConfirmPassword('')

@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useCallback, useEffect } from 'react'
+import api from '@/lib/api'
 import { Charge, ChargeStats } from '@/lib/types'
 
 function mapCharge(c: {
@@ -46,11 +47,10 @@ export function useCharges(limit = 10) {
   const fetchPage = useCallback(async (pageNum: number) => {
     setIsLoading(true)
     try {
-      const res = await fetch(`/api/charges?page=${pageNum}&limit=${limit}`, {
-        credentials: 'include',
+      const res = await api.get(`/api/charges?page=${pageNum}&limit=${limit}`, {
+        withCredentials: true,
       })
-      if (!res.ok) return
-      const data = await res.json()
+      const data = res.data
       setCharges(data.data.map(mapCharge))
       setTotalPages(data.totalPages)
       setTotal(data.total)
@@ -61,10 +61,13 @@ export function useCharges(limit = 10) {
   }, [limit])
 
   const fetchStats = useCallback(async () => {
-    const res = await fetch('/api/charges/stats', { credentials: 'include' })
-    if (!res.ok) return
-    const data: ChargeStats = await res.json()
-    setStats(data)
+    try {
+      const res = await api.get('/api/charges/stats', { withCredentials: true })
+      const data: ChargeStats = res.data
+      setStats(data)
+    } catch {
+      // ignore
+    }
   }, [])
 
   useEffect(() => {

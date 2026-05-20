@@ -1,3 +1,5 @@
+import axios from 'axios'
+
 export class TrustlineError extends Error {
   constructor(message: string) {
     super(message)
@@ -26,22 +28,32 @@ function getUsdcIssuer(): string {
 }
 
 export async function validateUsdcTrustline(walletAddress: string): Promise<void> {
-  const res = await fetch(
-    `${getHorizonUrl()}/accounts/${walletAddress}`,
-    { headers: { Accept: 'application/json' } }
-  )
+  try {
+    const res = await axios.get(`${getHorizonUrl()}/accounts/${walletAddress}`, {
+      headers: { Accept: 'application/json' },
+    })
+    const account = res.data
 
-  if (res.status === 404) {
-    throw new TrustlineError(
-      'Carteira Stellar não encontrada na rede. Certifique-se de que a conta foi ativada com XLM.'
+    const usdcIssuer = getUsdcIssuer()
+
+    const hasTrustline = (account.balances as any[]).some(
+      (b) => b.asset_code === 'USDC' && b.asset_issuer === usdcIssuer
     )
-  }
 
-  if (!res.ok) {
-    throw new Error(`Erro ao consultar a rede Stellar (status ${res.status})`)
+    if (!hasTrustline) {
+      throw new TrustlineError(
+        'A carteira não possui trustline de USDC ativo. Ative o trustline para USDC antes de cadastrar.'
+      )
+    }
+  } catch (err: any) {
+    if (err.response?.status === 404) {
+      throw new TrustlineError(
+        'Carteira Stellar não encontrada na rede. Certifique-se de que a conta foi ativada com XLM.'
+      )
+    }
+    if (err instanceof TrustlineError) throw err
+    throw new Error(`Erro ao consultar a rede Stellar (status ${err.response?.status || 'desconhecido'})`)
   }
-
-  const account = await res.json()
   const usdcIssuer = getUsdcIssuer()
 
   const hasTrustline = (account.balances as any[]).some(

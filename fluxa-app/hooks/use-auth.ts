@@ -1,5 +1,6 @@
 import { create } from 'zustand'
 import { persist, createJSONStorage } from 'zustand/middleware'
+import api from '@/lib/api'
 
 interface User {
   id: string
@@ -24,7 +25,7 @@ export const useAuth = create<AuthState>()(
       setAuth: (user, token) => set({ user, token, isAuthenticated: true }),
       logout: async () => {
         try {
-          await fetch('/api/logout', { method: 'POST' })
+          await api.post('/api/logout')
         } catch (e) {
           console.error('Erro ao limpar cookie de sessão:', e)
         }

@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
+import api from '@/lib/api'
 import { ArrowDownLeft, ArrowUpRight, Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -43,16 +44,16 @@ export function WalletTransactionsList({ walletAddress }: Props) {
       ? `/api/wallet/transactions?cursor=${encodeURIComponent(cursor)}`
       : '/api/wallet/transactions'
 
-    const res = await fetch(url, { credentials: 'include' })
-    if (!res.ok) {
-      const data = await res.json().catch(() => ({}))
-      throw new Error(data.error ?? 'Erro ao buscar transações')
-    }
-    const data: FetchResult = await res.json()
+    try {
+      const res = await api.get(url, { withCredentials: true })
+      const data: FetchResult = res.data
 
-    setTransactions((prev) => (append ? [...prev, ...data.transactions] : data.transactions))
-    setNextCursor(data.nextCursor)
-    setHasMore(data.hasMore)
+      setTransactions((prev) => (append ? [...prev, ...data.transactions] : data.transactions))
+      setNextCursor(data.nextCursor)
+      setHasMore(data.hasMore)
+    } catch (err: any) {
+      throw new Error(err.response?.data?.error ?? 'Erro ao buscar transações')
+    }
   }, [])
 
   useEffect(() => {

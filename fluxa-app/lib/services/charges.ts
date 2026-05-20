@@ -1,4 +1,5 @@
 import { db } from '@/lib/db'
+import axios from 'axios'
 import { verifyToken } from '@/lib/services/auth'
 import { recordChargeOnStellar, updateChargeStatusOnStellar } from '@/lib/services/stellar'
 import { getUsdcBrlRate, brlToUsdc } from '@/lib/services/exchange'
@@ -11,24 +12,21 @@ async function asaasPost(path: string, body: object) {
   const token = process.env.ASAAS_TOKEN_API
   if (!token) throw new Error('ASAAS_TOKEN_API não configurado')
 
-  const res = await fetch(`${ASAAS_BASE_URL}${path}`, {
-    method: 'POST',
-    headers: {
-      accept: 'application/json',
-      'content-type': 'application/json',
-      access_token: token,
-    },
-    body: JSON.stringify(body),
-  })
-
-  if (!res.ok) {
-    const body = await res.json().catch(() => null)
-    const description = body?.errors?.[0]?.description ?? `Asaas API error (${res.status})`
-    const err = Object.assign(new Error(description), { statusCode: res.status })
-    throw err
+  try {
+    const res = await axios.post(`${ASAAS_BASE_URL}${path}`, body, {
+      headers: {
+        accept: 'application/json',
+        'content-type': 'application/json',
+        access_token: token,
+      },
+    })
+    return res.data
+  } catch (err: any) {
+    const data = err.response?.data
+    const description = data?.errors?.[0]?.description ?? `Asaas API error (${err.response?.status})`
+    const errorObj = Object.assign(new Error(description), { statusCode: err.response?.status })
+    throw errorObj
   }
-
-  return res.json()
 }
 
 export async function createCharge(

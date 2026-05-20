@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState, useCallback } from 'react'
+import axios from 'axios'
 import { RefreshCw } from 'lucide-react'
 import { Skeleton } from '@/components/ui/skeleton'
 import { cn } from '@/lib/utils'
@@ -61,12 +62,10 @@ export function CryptoPrices() {
   const fetchPrices = useCallback(async (showSpinner = false) => {
     if (showSpinner) setIsRefreshing(true)
     try {
-      const res = await fetch(
-        'https://api.coingecko.com/api/v3/simple/price?ids=stellar,usd-coin,bitcoin,ethereum&vs_currencies=brl',
-        { next: { revalidate: 0 } }
+      const res = await axios.get(
+        'https://api.coingecko.com/api/v3/simple/price?ids=stellar,usd-coin,bitcoin,ethereum&vs_currencies=brl'
       )
-      if (!res.ok) throw new Error()
-      const data: Prices = await res.json()
+      const data: Prices = res.data
       setPrices(data)
       setUpdatedAt(new Date())
       setError(false)

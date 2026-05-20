@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import api from '@/lib/api'
 import { AlertCircle, Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -45,8 +46,8 @@ export function NewChargeModal({ open, onClose, onSuccess }: NewChargeModalProps
     if (!open) return
 
     const fetchRate = () => {
-      fetch('/api/exchange/rate')
-        .then((r) => r.json())
+      api.get('/api/exchange/rate')
+        .then((r) => r.data)
         .then((d) => {
           setUsdcRate(d.rate ?? null)
           setRateUpdatedAt(new Date())
@@ -93,24 +94,14 @@ export function NewChargeModal({ open, onClose, onSuccess }: NewChargeModalProps
     setError('')
 
     try {
-      const response = await fetch('/api/charges', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({
-          amountBrl: numAmount,
-          description: description.trim(),
-          billingType,
-          dueDate,
-        }),
+      const response = await api.post('/api/charges', {
+        amountBrl: numAmount,
+        description: description.trim(),
+        billingType,
+        dueDate,
       })
 
-      const data = await response.json()
-
-      if (!response.ok) {
-        setError(data.error ?? 'Erro ao criar cobrança')
-        return
-      }
+      const data = response.data
 
       const charge: Charge = {
         id: data.id,

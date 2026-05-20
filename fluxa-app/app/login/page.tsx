@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
+import api from '@/lib/api'
 import { useRouter } from 'next/navigation'
 import { Zap, Mail, AlertCircle } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -24,13 +25,8 @@ export default function LoginPage() {
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault()
     execute(async () => {
-      const response = await fetch('/api/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password }),
-      })
-      const data = await response.json()
-      if (!response.ok) throw new Error(data.error || 'Erro ao realizar login')
+      const res = await api.post('/api/login', { email, password })
+      const data = res.data
       if (data.token && data.user) setAuth(data.user, data.token)
       router.push('/dashboard')
     })

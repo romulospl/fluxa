@@ -11,6 +11,7 @@ import { validateWalletAddress } from '@/lib/data'
 import { useCopyToClipboard } from '@/hooks/use-copy-to-clipboard'
 import { toastSuccess, toastError } from '@/lib/toast'
 import { WalletTransactionsList } from '@/components/dashboard/wallet-transactions-list'
+import api from '@/lib/api'
 
 const STELLAR_ADDRESS_REGEX = /^G[A-Z2-7]{55}$/
 
@@ -28,9 +29,8 @@ export default function WalletPage() {
   useEffect(() => {
     async function loadWallet() {
       try {
-        const res = await fetch('/api/users/current')
-        if (!res.ok) return
-        const data = await res.json()
+        const res = await api.get('/api/users/current')
+        const data = res.data
         setWalletAddress(data.walletAddress ?? '')
       } finally {
         setIsLoadingUser(false)
@@ -44,9 +44,8 @@ export default function WalletPage() {
     async function loadBalance() {
       setIsLoadingBalance(true)
       try {
-        const res = await fetch('/api/wallet/balance')
-        if (!res.ok) return
-        const data = await res.json()
+        const res = await api.get('/api/wallet/balance')
+        const data = res.data
         setUsdcBalance(data.balance)
       } finally {
         setIsLoadingBalance(false)
@@ -63,13 +62,8 @@ export default function WalletPage() {
     }
     setIsSaving(true)
     try {
-      const res = await fetch('/api/users/wallet', {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ walletAddress: trimmedAddress }),
-      })
-      const data = await res.json()
-      if (!res.ok) throw new Error(data.error || 'Erro ao salvar endereço')
+      const res = await api.patch('/api/users/wallet', { walletAddress: trimmedAddress })
+      const data = res.data
       setWalletAddress(data.walletAddress)
       setIsEditing(false)
       setNewAddress('')

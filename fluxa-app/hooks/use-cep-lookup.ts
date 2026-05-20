@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import axios from 'axios'
 
 type CepResult = {
   street: string
@@ -20,8 +21,8 @@ export function useCepLookup() {
 
     setIsFetching(true)
     try {
-      const res = await fetch(`https://viacep.com.br/ws/${digits}/json/`)
-      const data = await res.json()
+      const res = await axios.get(`https://viacep.com.br/ws/${digits}/json/`)
+      const data = res.data
       if (data.erro) {
         onError?.('CEP não encontrado. Preencha o endereço manualmente.')
         return

@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
+import axios from 'axios'
 import { getUserFromToken } from '@/lib/services/auth'
 
 const HORIZON_URLS: Record<string, string> = {
@@ -81,27 +82,24 @@ export async function GET(request: Request) {
       )
     }
 
-    const horizonRes = await fetch(
-      `${getHorizonUrl()}/accounts/${walletAddress}`,
-      { headers: { Accept: 'application/json' }, next: { revalidate: 0 } }
-    )
+    try {
+      const horizonRes = await axios.get(`${getHorizonUrl()}/accounts/${walletAddress}`, {
+        headers: { Accept: 'application/json' },
+      })
+      const horizonData = horizonRes.data
 
-    if (horizonRes.status === 404) {
-      return NextResponse.json({ balance: '0' })
+      const usdcIssuer = getUsdcIssuer()
+      const usdcBalance = (horizonData.balances as any[]).find(
+        (b) => b.asset_code === 'USDC' && b.asset_issuer === usdcIssuer
+      )
+
+      return NextResponse.json({ balance: usdcBalance?.balance ?? '0' })
+    } catch (err: any) {
+      if (err.response?.status === 404) {
+        return NextResponse.json({ balance: '0' })
+      }
+      throw new Error(`Horizon API retornou status ${err.response?.status}`)
     }
-
-    if (!horizonRes.ok) {
-      throw new Error(`Horizon API retornou status ${horizonRes.status}`)
-    }
-
-    const account = await horizonRes.json()
-    const usdcIssuer = getUsdcIssuer()
-
-    const usdcBalance = (account.balances as any[]).find(
-      (b) => b.asset_code === 'USDC' && b.asset_issuer === usdcIssuer
-    )
-
-    return NextResponse.json({ balance: usdcBalance?.balance ?? '0' })
   } catch (error: any) {
     console.error('Erro na rota GET /api/wallet/balance:', error)
 

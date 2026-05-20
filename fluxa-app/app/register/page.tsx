@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import api from '@/lib/api'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { Zap, Loader2, Mail, User, Wallet, Building2, MapPin, AlertCircle, CheckCircle2 } from 'lucide-react'
@@ -100,20 +101,15 @@ export default function RegisterPage() {
   const handleRegister = (e: React.FormEvent) => {
     e.preventDefault()
     execute(async () => {
-      const response = await fetch('/api/users', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          name,
-          email,
-          password,
-          walletAddress,
-          cnpj: cnpj.replace(/\D/g, ''),
-          address: { zipCode: zipCode.replace(/\D/g, ''), street, number, complement, neighborhood, city, state },
-        }),
+      const res = await api.post('/api/users', {
+        name,
+        email,
+        password,
+        walletAddress,
+        cnpj: cnpj.replace(/\D/g, ''),
+        address: { zipCode: zipCode.replace(/\D/g, ''), street, number, complement, neighborhood, city, state },
       })
-      const data = await response.json()
-      if (!response.ok) throw new Error(data.error || 'Erro ao realizar cadastro')
+      const data = res.data
       setSuccess(true)
       setTimeout(() => router.push('/login'), 2000)
     })

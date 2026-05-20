@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
+import axios from 'axios'
 import { getUserFromToken } from '@/lib/services/auth'
 import { db } from '@/lib/db'
 
@@ -92,20 +93,19 @@ export async function GET(request: Request) {
     const horizonParams = new URLSearchParams({ order: 'desc', limit: String(PAGE_LIMIT) })
     if (cursor) horizonParams.set('cursor', cursor)
 
-    const horizonRes = await fetch(
-      `${getHorizonUrl()}/accounts/${walletAddress}/payments?${horizonParams}`,
-      { headers: { Accept: 'application/json' }, next: { revalidate: 0 } }
-    )
-
-    if (horizonRes.status === 404) {
-      return NextResponse.json({ transactions: [], nextCursor: null, hasMore: false })
+    let horizonData: any
+    try {
+      const horizonRes = await axios.get(`${getHorizonUrl()}/accounts/${walletAddress}/payments?${horizonParams}`, {
+        headers: { Accept: 'application/json' },
+      })
+      horizonData = horizonRes.data
+    } catch (err: any) {
+      if (err.response?.status === 404) {
+        return NextResponse.json({ transactions: [], nextCursor: null, hasMore: false })
+      }
+      throw new Error(`Horizon API retornou status ${err.response?.status}`)
     }
 
-    if (!horizonRes.ok) {
-      throw new Error(`Horizon API retornou status ${horizonRes.status}`)
-    }
-
-    const horizonData = await horizonRes.json()
     const records: any[] = horizonData._embedded?.records ?? []
 
     const usdcPayments = records.filter((r) => r.type === 'payment' && r.asset_code === 'USDC')

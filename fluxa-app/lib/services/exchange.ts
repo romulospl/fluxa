@@ -1,18 +1,18 @@
+import axios from 'axios'
+
 const STELLAR_SERVICE_URL = process.env.STELLAR_SERVICE_URL ?? 'http://localhost:3001'
 const STELLAR_SERVICE_SECRET = process.env.STELLAR_SERVICE_SECRET!
 
 export async function getUsdcBrlRate(): Promise<number> {
-  const res = await fetch(`${STELLAR_SERVICE_URL}/exchange-rate`, {
-    headers: { Authorization: `Bearer ${STELLAR_SERVICE_SECRET}` },
-  })
-
-  if (!res.ok) {
-    const body = await res.json().catch(() => ({}))
-    throw new Error(`Stellar service: ${body.error ?? res.statusText}`)
+  try {
+    const res = await axios.get(`${STELLAR_SERVICE_URL}/exchange-rate`, {
+      headers: { Authorization: `Bearer ${STELLAR_SERVICE_SECRET}` },
+    })
+    return res.data.rate
+  } catch (err: any) {
+    const data = err.response?.data
+    throw new Error(`Stellar service: ${data?.error ?? err.response?.statusText}`)
   }
-
-  const { rate } = await res.json()
-  return rate
 }
 
 export function brlToUsdc(amountBrl: number, rate: number): number {
