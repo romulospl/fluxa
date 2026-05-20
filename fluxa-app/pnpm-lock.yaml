@@ -102,6 +102,9 @@ importers:
       '@radix-ui/react-tooltip':
         specifier: 1.2.8
         version: 1.2.8(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
+      '@reflector/oracle-client':
+        specifier: github:reflector-network/oracle-client
+        version: https://codeload.github.com/reflector-network/oracle-client/tar.gz/872b8e15e21cfd68824db1925926a138cea9fb15(@stellar/stellar-sdk@15.1.0)
       '@stellar/stellar-sdk':
         specifier: ^15.1.0
         version: 15.1.0
@@ -1423,6 +1426,12 @@ packages:
 
   '@radix-ui/rect@1.1.1':
     resolution: {integrity: sha512-HPwpGIzkl28mWyZqG52jiqDJ12waP11Pa1lGoiyUkIEuMLBP0oeK/C89esbXrxsky5we7dfd8U58nm0SgAWpVw==}
+
+  '@reflector/oracle-client@https://codeload.github.com/reflector-network/oracle-client/tar.gz/872b8e15e21cfd68824db1925926a138cea9fb15':
+    resolution: {tarball: https://codeload.github.com/reflector-network/oracle-client/tar.gz/872b8e15e21cfd68824db1925926a138cea9fb15}
+    version: 7.1.0
+    peerDependencies:
+      '@stellar/stellar-sdk': '>=15'
 
   '@scarf/scarf@1.4.0':
     resolution: {integrity: sha512-xxeapPiUXdZAE3che6f3xogoJPeZgig6omHEy1rIY5WVsB3H2BHNnZH+gHG6x91SCWyQCzWGsuL2Hh3ClO5/qQ==}
@@ -4404,6 +4413,10 @@ snapshots:
       '@types/react-dom': 19.2.3(@types/react@19.2.14)
 
   '@radix-ui/rect@1.1.1': {}
+
+  '@reflector/oracle-client@https://codeload.github.com/reflector-network/oracle-client/tar.gz/872b8e15e21cfd68824db1925926a138cea9fb15(@stellar/stellar-sdk@15.1.0)':
+    dependencies:
+      '@stellar/stellar-sdk': 15.1.0
 
   '@scarf/scarf@1.4.0': {}
 

@@ -11,6 +11,9 @@ importers:
       '@hono/node-server':
         specifier: ^1.13.7
         version: 1.19.14(hono@4.12.18)
+      '@reflector/oracle-client':
+        specifier: github:reflector-network/oracle-client
+        version: https://codeload.github.com/reflector-network/oracle-client/tar.gz/872b8e15e21cfd68824db1925926a138cea9fb15(@stellar/stellar-sdk@15.1.0)
       '@stellar/stellar-sdk':
         specifier: ^15.1.0
         version: 15.1.0
@@ -199,6 +202,12 @@ packages:
   '@noble/hashes@1.8.0':
     resolution: {integrity: sha512-jCs9ldd7NwzpgXDIf6P3+NrHh9/sD6CQdxHyjQI+h/6rDNo88ypBxxz45UDuZHz9r3tNz7N/VInSVoVdtXEI4A==}
     engines: {node: ^14.21.3 || >=16}
+
+  '@reflector/oracle-client@https://codeload.github.com/reflector-network/oracle-client/tar.gz/872b8e15e21cfd68824db1925926a138cea9fb15':
+    resolution: {tarball: https://codeload.github.com/reflector-network/oracle-client/tar.gz/872b8e15e21cfd68824db1925926a138cea9fb15}
+    version: 7.1.0
+    peerDependencies:
+      '@stellar/stellar-sdk': '>=15'
 
   '@stellar/js-xdr@4.0.0':
     resolution: {integrity: sha512-+NmNa7Tk5BI5XFdy/6xGTqAN4J9a9KgCrCGhj2uEUTCBhLkch0M+QbKzNH8zEnejWe0p8w+0q5hUVX6L3OzoVA==}
@@ -537,6 +546,10 @@ snapshots:
       '@noble/hashes': 1.8.0
 
   '@noble/hashes@1.8.0': {}
+
+  '@reflector/oracle-client@https://codeload.github.com/reflector-network/oracle-client/tar.gz/872b8e15e21cfd68824db1925926a138cea9fb15(@stellar/stellar-sdk@15.1.0)':
+    dependencies:
+      '@stellar/stellar-sdk': 15.1.0
 
   '@stellar/js-xdr@4.0.0': {}
 

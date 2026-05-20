@@ -9,6 +9,7 @@
   },
   "dependencies": {
     "@hono/node-server": "^1.13.7",
+    "@reflector/oracle-client": "github:reflector-network/oracle-client",
     "@stellar/stellar-sdk": "^15.1.0",
     "hono": "^4.7.0"
   },

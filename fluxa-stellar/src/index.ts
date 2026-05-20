@@ -1,6 +1,7 @@
 import { serve } from '@hono/node-server'
 import { Hono } from 'hono'
 import { recordCharge, updateChargeStatus, transferUsdc } from './stellar'
+import { getUsdcBrlRate } from './exchange'
 
 const VALID_STATUSES = ['pending', 'paid', 'cancelled', 'overdue'] as const
 type ChargeStatus = (typeof VALID_STATUSES)[number]
@@ -25,6 +26,17 @@ app.use('*', async (c, next) => {
   const denied = authMiddleware(c.req.raw)
   if (denied) return denied
   await next()
+})
+
+app.get('/exchange-rate', async (c) => {
+  try {
+    const rate = await getUsdcBrlRate()
+    return c.json({ rate })
+  } catch (err) {
+    const message = err instanceof Error ? err.message : 'Erro desconhecido'
+    console.error('[Stellar] Falha ao consultar taxa Reflector:', message)
+    return c.json({ error: message }, 500)
+  }
 })
 
 app.post('/charges', async (c) => {
