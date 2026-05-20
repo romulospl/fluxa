@@ -160,8 +160,28 @@ export async function transferUsdc(to: string, amount: string): Promise<string> 
 
   tx.sign(keypair)
 
-  const result = await server.submitTransaction(tx)
-  return result.hash
+  const txHash = tx.hash().toString('hex')
+
+  try {
+    const result = await server.submitTransaction(tx)
+    return result.hash
+  } catch (err: unknown) {
+    const status = (err as { response?: { status?: number } })?.response?.status
+    if (status !== 504) throw err
+
+    // 504: Horizon timed out but the tx may have landed — poll for confirmation
+    const deadline = Date.now() + 30_000
+    while (Date.now() < deadline) {
+      await new Promise((r) => setTimeout(r, 3000))
+      try {
+        const confirmed = await server.transactions().transaction(txHash).call()
+        if (confirmed.successful) return txHash
+      } catch {
+        // still not confirmed — keep polling
+      }
+    }
+    throw new Error(`Timeout aguardando confirmação da transferência após 504: ${txHash}`)
+  }
 }
 
 export async function updateChargeStatus(
