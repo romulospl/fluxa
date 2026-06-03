@@ -5,7 +5,6 @@ import { Plus } from 'lucide-react'
 import { useCharges } from '@/hooks/use-charges'
 import { StatsCards } from '@/components/dashboard/stats-cards'
 import { ChargesTable } from '@/components/dashboard/charges-table'
-import { QuotesCard } from '@/components/dashboard/quotes-card'
 import { NewChargeModal } from '@/components/dashboard/new-charge-modal'
 import { Button } from '@/components/ui/button'
 
@@ -37,15 +36,8 @@ export default function DashboardPage() {
       {/* Stats */}
       <StatsCards stats={stats} />
 
-      {/* Main Grid */}
-      <div className="grid gap-6 xl:grid-cols-3">
-        <div className="xl:col-span-2">
-          <ChargesTable charges={charges} onRefresh={() => goToPage(1)} isRefreshing={isLoading} />
-        </div>
-        <div>
-          <QuotesCard />
-        </div>
-      </div>
+      {/* Main Content */}
+      <ChargesTable charges={charges} onRefresh={() => goToPage(1)} isRefreshing={isLoading} />
 
       {/* New Charge Modal */}
       <NewChargeModal
