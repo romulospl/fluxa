@@ -32,6 +32,7 @@ export function ChargesTable({ charges, onViewCharge, onRefresh, isRefreshing }:
           <button
             onClick={onRefresh}
             disabled={isRefreshing}
+            suppressHydrationWarning
             className="text-muted-foreground hover:text-foreground transition-colors disabled:opacity-40"
             aria-label="Atualizar cobranças"
           >

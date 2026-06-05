@@ -134,7 +134,7 @@ export function NewChargeModal({ open, onClose, onSuccess }: NewChargeModalProps
 
   return (
     <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-md" aria-describedby={undefined}>
         <DialogHeader>
           <DialogTitle>Nova Cobrança</DialogTitle>
         </DialogHeader>
