@@ -95,6 +95,10 @@ export async function createCharge(
     dueDate: string
   }
 ) {
+  if (amountBrl > 500) {
+    throw Object.assign(new Error('O valor máximo permitido para uma cobrança é de R$ 500,00.'), { statusCode: 400 })
+  }
+
   const decoded = await verifyToken(token)
 
   const user = await db.user.findUnique({

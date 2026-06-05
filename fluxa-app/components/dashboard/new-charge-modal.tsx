@@ -80,6 +80,11 @@ export function NewChargeModal({ open, onClose, onSuccess }: NewChargeModalProps
       return
     }
 
+    if (numAmount > 500) {
+      setError('O valor máximo é R$ 500,00')
+      return
+    }
+
     if (!description.trim()) {
       setError('Informe uma descrição')
       return
