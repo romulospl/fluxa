@@ -79,10 +79,13 @@ model ChargeTransaction {
   status       String
   hash         String?
   amountBrl    Decimal? @map("amount_brl")     @db.Decimal(15, 2)
-  amountUsdc   Decimal? @map("amount_usdc")    @db.Decimal(18, 7)
-  feeAmountBrl Decimal? @map("fee_amount_brl") @db.Decimal(15, 2)
-  occurredAt   DateTime @map("occurred_at")
-  createdAt  DateTime @default(now()) @map("created_at")
+  amountUsdc       Decimal? @map("amount_usdc")    @db.Decimal(18, 7)
+  feeAmountBrl     Decimal? @map("fee_amount_brl") @db.Decimal(15, 2)
+  etherfuseQuoteId String?  @map("etherfuse_quote_id")
+  etherfuseOrderId String?  @map("etherfuse_order_id")
+  asaasTransferId  String?  @map("asaas_transfer_id")
+  occurredAt       DateTime @map("occurred_at")
+  createdAt        DateTime @default(now()) @map("created_at")
 
   @@map("charge_transactions")
 }

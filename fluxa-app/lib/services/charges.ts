@@ -3,7 +3,7 @@ import axios from 'axios'
 import { verifyToken } from '@/lib/services/auth'
 import { recordChargeOnStellar, updateChargeStatusOnStellar } from '@/lib/services/stellar'
 import { getUsdcBrlRate, brlToUsdc } from '@/lib/services/exchange'
-import { enqueueUsdcTransfer } from '@/lib/queue'
+import { enqueueUsdcTransfer, enqueueHybridOnramp } from '@/lib/queue'
 import type { ChargeStats } from '@/lib/types'
 
 const ASAAS_BASE_URL = 'https://sandbox.asaas.com/api/v3'
@@ -27,6 +27,63 @@ async function asaasPost(path: string, body: object) {
     const errorObj = Object.assign(new Error(description), { statusCode: err.response?.status })
     throw errorObj
   }
+}
+
+async function asaasDelete(path: string) {
+  const token = process.env.ASAAS_TOKEN_API
+  if (!token) throw new Error('ASAAS_TOKEN_API não configurado')
+
+  try {
+    const res = await axios.delete(`${ASAAS_BASE_URL}${path}`, {
+      headers: {
+        accept: 'application/json',
+        access_token: token,
+      },
+    })
+    return res.data
+  } catch (err: any) {
+    const data = err.response?.data
+    const description = data?.errors?.[0]?.description ?? `Asaas API error (${err.response?.status})`
+    const errorObj = Object.assign(new Error(description), { statusCode: err.response?.status })
+    throw errorObj
+  }
+}
+
+export async function createAsaasTransfer(value: number, pixKey: string) {
+  // Considerando que usaremos PIX EVP (Chave Aleatória) como mock para o Sandbox da Etherfuse
+  const payload = {
+    value,
+    operationType: 'PIX',
+    pixAddressKey: pixKey,
+    pixAddressKeyType: 'EVP', // Assumindo EVP para a chave Clabe no sandbox
+    description: 'Onramp Etherfuse',
+  }
+  return asaasPost('/transfers', payload)
+}
+
+export async function getAsaasTransferStatus(transferId: string) {
+  const token = process.env.ASAAS_TOKEN_API
+  if (!token) throw new Error('ASAAS_TOKEN_API não configurado')
+
+  try {
+    const res = await axios.get(`${ASAAS_BASE_URL}/transfers/${transferId}`, {
+      headers: {
+        accept: 'application/json',
+        access_token: token,
+      },
+    })
+    return res.data
+  } catch (err: any) {
+    const data = err.response?.data
+    const description = data?.errors?.[0]?.description ?? `Asaas API error (${err.response?.status})`
+    const errorObj = Object.assign(new Error(description), { statusCode: err.response?.status })
+    throw errorObj
+  }
+}
+
+export async function cancelAsaasTransfer(transferId: string) {
+  // Tenta cancelar no Asaas (usualmente DELETE /transfers/{id} ou um erro se já não for mais possível)
+  return asaasDelete(`/transfers/${transferId}`)
 }
 
 export async function createCharge(
@@ -154,7 +211,7 @@ export async function createCharge(
 
 export async function markChargeAsPaid(externalId: string, paymentDate: string) {
   const charges = await db.charge.findMany({
-    where: { externalId },
+    where: { externalId, status: 'pending' },
     select: {
       id: true,
       amountBrl: true,
@@ -167,13 +224,15 @@ export async function markChargeAsPaid(externalId: string, paymentDate: string) 
     },
   })
 
+  if (!charges.length) return
+
   // Asaas sends paymentDate as YYYY-MM-DD only — no time component. Any fixed
   // time (midnight, noon UTC) converts incorrectly in BRT. The webhook fires at
   // the moment of confirmation, so the server clock is the accurate timestamp.
   const paidAt = new Date()
 
   await db.charge.updateMany({
-    where: { externalId },
+    where: { externalId, status: 'pending' },
     data: { status: 'paid', paidAt, transferStatus: 'transfer_pending' },
   })
 
@@ -204,9 +263,10 @@ export async function markChargeAsPaid(externalId: string, paymentDate: string) 
         })
     }
 
-    enqueueUsdcTransfer(charge.id)
-      .then(() => console.log(`[Queue] Job usdc-transfer enfileirado para cobrança ${charge.id}`))
-      .catch((err: Error) => console.error(`[Queue] Falha ao enfileirar transferência para ${charge.id}:`, err.message))
+    // Fluxo Híbrido: Enfileira a rotina de Onramp que fará a cotação e o PIX do Asaas para a Etherfuse
+    enqueueHybridOnramp(charge.id)
+      .then(() => console.log(`[Queue] Job hybrid-onramp enfileirado para cobrança ${charge.id}`))
+      .catch((err: Error) => console.error(`[Queue] Falha ao enfileirar onramp para ${charge.id}:`, err.message))
   }
 }
 
