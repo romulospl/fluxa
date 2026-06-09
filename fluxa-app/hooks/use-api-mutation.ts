@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { isAxiosError } from 'axios'
 
 export function useApiMutation() {
   const [isLoading, setIsLoading] = useState(false)
@@ -10,11 +11,19 @@ export function useApiMutation() {
     try {
       await fn()
     } catch (err: any) {
-      setError(err.message || 'Erro inesperado')
+      setError(getErrorMessage(err))
     } finally {
       setIsLoading(false)
     }
   }
 
   return { execute, isLoading, error, setError }
+}
+
+function getErrorMessage(err: unknown): string {
+  if (isAxiosError(err)) {
+    return err.response?.data?.error || 'Não foi possível concluir a operação. Tente novamente.'
+  }
+  if (err instanceof Error && err.message) return err.message
+  return 'Erro inesperado'
 }
