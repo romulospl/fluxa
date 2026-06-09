@@ -54,15 +54,4 @@ export async function validateUsdcTrustline(walletAddress: string): Promise<void
     if (err instanceof TrustlineError) throw err
     throw new Error(`Erro ao consultar a rede Stellar (status ${err.response?.status || 'desconhecido'})`)
   }
-  const usdcIssuer = getUsdcIssuer()
-
-  const hasTrustline = (account.balances as any[]).some(
-    (b) => b.asset_code === 'USDC' && b.asset_issuer === usdcIssuer
-  )
-
-  if (!hasTrustline) {
-    throw new TrustlineError(
-      'A carteira não possui trustline de USDC ativo. Ative o trustline para USDC antes de cadastrar.'
-    )
-  }
 }
