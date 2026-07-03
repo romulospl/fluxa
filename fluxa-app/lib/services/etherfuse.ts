@@ -12,9 +12,20 @@ const getWalletUuid = () => process.env.ETHERFUSE_WALLET_UUID
 const getBankAccountUuid = () => process.env.ETHERFUSE_BANK_ACCOUNT_UUID
 const getWalletPublicKey = () => process.env.ETHERFUSE_WALLET_PUBLIC_KEY
 
+// Erro tipado da Etherfuse, expondo o `type` para que os chamadores possam
+// decidir se a falha é transitória (ex.: FailedToGetQuote) e vale retry.
+export class EtherfuseApiError extends Error {
+  type?: string
+  constructor(message: string, type?: string) {
+    super(message)
+    this.name = 'EtherfuseApiError'
+    this.type = type
+  }
+}
+
 async function etherfuseRequest(method: 'GET' | 'POST', path: string, data?: any) {
   if (!ETHERFUSE_API_KEY) throw new Error('ETHERFUSE_API_KEY não configurada')
-  
+
   try {
     const res = await axios({
       method,
@@ -29,7 +40,10 @@ async function etherfuseRequest(method: 'GET' | 'POST', path: string, data?: any
   } catch (err: any) {
     const errorData = err.response?.data
     console.error(`[Etherfuse] Erro na API (${path}):`, JSON.stringify(errorData))
-    throw new Error(errorData?.message || `Erro na API da Etherfuse: ${err.response?.statusText}`)
+    throw new EtherfuseApiError(
+      errorData?.message || `Erro na API da Etherfuse: ${err.response?.statusText}`,
+      errorData?.type,
+    )
   }
 }
 
@@ -62,8 +76,24 @@ export async function createQuote(amountBrl: number): Promise<QuoteResponse> {
     walletAddress: walletPub, // A carteira da empresa para onde vai o onramp inicial
   }
 
-  const response = await etherfuseRequest('POST', '/ramp/quote', payload)
-  
+  // O motor de cotação da Etherfuse pode retornar FailedToGetQuote de forma
+  // transitória ("Please try again later") quando não consegue precificar o par.
+  // Reusa o mesmo quoteId entre tentativas e aplica backoff exponencial.
+  const MAX_ATTEMPTS = 4
+  let response: any
+  for (let attempt = 1; ; attempt++) {
+    try {
+      response = await etherfuseRequest('POST', '/ramp/quote', payload)
+      break
+    } catch (err) {
+      const transient = err instanceof EtherfuseApiError && err.type === 'FailedToGetQuote'
+      if (!transient || attempt >= MAX_ATTEMPTS) throw err
+      const delayMs = 1000 * 2 ** (attempt - 1) // 1s, 2s, 4s
+      console.warn(`[Etherfuse] Cotação falhou (FailedToGetQuote), tentativa ${attempt}/${MAX_ATTEMPTS}. Repetindo em ${delayMs}ms...`)
+      await new Promise((resolve) => setTimeout(resolve, delayMs))
+    }
+  }
+
   // A API pode retornar um objeto de erro com tipo
   if (response.type && response.message) {
     throw new Error(`Falha ao criar cotação: ${response.message}`)

@@ -2,3 +2,5 @@ simulate_http/*
 .antigravitycli
 teste-onramp/node_modules/
 .docslocal/
+.romulo/.env
+docs/.env
