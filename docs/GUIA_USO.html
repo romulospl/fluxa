@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Guia de Uso - Fluxa</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #2563eb;
+            --secondary-color: #f1f5f9;
+            --text-main: #334155;
+            --text-light: #64748b;
+            --bg-color: #f8fafc;
+            --card-bg: #ffffff;
+            --code-bg: #1e293b;
+            --code-color: #e2e8f0;
+            --border-color: #e2e8f0;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            line-height: 1.7;
+            margin: 0;
+            padding: 40px 20px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: var(--card-bg);
+            padding: 50px 60px;
+            border-radius: 16px;
+            box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+        }
+
+        h1 {
+            color: #0f172a;
+            font-size: 2.5em;
+            margin-top: 0;
+            margin-bottom: 0.5em;
+            border-bottom: 3px solid var(--primary-color);
+            padding-bottom: 15px;
+            display: inline-block;
+        }
+
+        h2 {
+            color: #0f172a;
+            margin-top: 1.8em;
+            font-size: 1.8em;
+            border-bottom: 2px solid var(--secondary-color);
+            padding-bottom: 10px;
+        }
+
+        h3 {
+            color: #1e293b;
+            font-size: 1.3em;
+            margin-top: 1.5em;
+            display: flex;
+            align-items: center;
+        }
+
+        h3::before {
+            content: '';
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            background-color: var(--primary-color);
+            border-radius: 50%;
+            margin-right: 10px;
+        }
+
+        p, li {
+            font-size: 1.05em;
+            color: var(--text-main);
+        }
+
+        a {
+            color: var(--primary-color);
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+
+        a:hover {
+            text-decoration: underline;
+            color: #1d4ed8;
+        }
+
+        pre {
+            background-color: var(--code-bg);
+            color: var(--code-color);
+            padding: 20px;
+            border-radius: 10px;
+            overflow-x: auto;
+            font-size: 0.95em;
+            box-shadow: inset 0 2px 4px 0 rgb(0 0 0 / 0.2);
+            border: 1px solid #334155;
+        }
+
+        code {
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+            background-color: var(--secondary-color);
+            color: #be123c;
+            padding: 3px 6px;
+            border-radius: 6px;
+            font-size: 0.9em;
+            font-weight: 500;
+        }
+
+        pre code {
+            background-color: transparent;
+            color: inherit;
+            padding: 0;
+            font-weight: normal;
+        }
+
+        hr {
+            border: 0;
+            height: 2px;
+            background: var(--secondary-color);
+            margin: 40px 0;
+        }
+
+        ul, ol {
+            padding-left: 20px;
+            margin-bottom: 20px;
+        }
+
+        li {
+            margin-bottom: 10px;
+        }
+
+        strong {
+            color: #0f172a;
+            font-weight: 600;
+        }
+
+        @media (max-width: 600px) {
+            .container {
+                padding: 30px 20px;
+            }
+            h1 {
+                font-size: 2em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Guia de Uso - Fluxa</h1>
+<p>O <strong>Fluxa</strong> é uma plataforma que conecta métodos de pagamento tradicionais do Brasil (PIX e Boleto) ao mundo das criptomoedas. O lojista cria uma cobrança em reais, o cliente paga normalmente e o Fluxa converte e deposita o valor em <strong>USDC</strong> (dólar digital) diretamente na carteira do lojista.</p>
+<hr>
+<h2>1. Pré-requisitos</h2>
+<p>Para rodar o projeto localmente, certifique-se de ter instalado:</p>
+<ul>
+<li><strong>Node.js 20+</strong></li>
+<li><strong>pnpm</strong> (gerenciador de pacotes)</li>
+<li><strong>PostgreSQL</strong> (banco de dados)</li>
+</ul>
+<hr>
+<h2>2. Como Executar o Projeto</h2>
+<p>O Fluxa é composto por duas aplicações principais que devem rodar simultaneamente: o <strong>app principal</strong> e o <strong>serviço blockchain</strong>.</p>
+<h3>Passo 2.1: Banco de Dados</h3>
+<p>Crie um banco de dados PostgreSQL para o projeto:</p>
+<pre><code class="language-bash">createdb fluxa
+</code></pre>
+<h3>Passo 2.2: Serviço Blockchain (<code>fluxa-stellar</code>)</h3>
+<p>Este serviço se comunica com a rede Stellar e roda na porta <code>3001</code>.</p>
+<ol>
+<li>Acesse a pasta: <code>cd fluxa-stellar</code></li>
+<li>Instale as dependências: <code>pnpm install</code></li>
+<li>Crie um arquivo <code>.env</code> baseado nas configurações do ambiente (chaves Stellar, Contract ID, etc.).</li>
+<li>Inicie o serviço: <code>pnpm dev</code></li>
+</ol>
+<h3>Passo 2.3: Aplicação Principal (<code>fluxa-app</code>)</h3>
+<p>Responsável pelo painel do lojista e interface de pagamento. Roda na porta <code>3000</code>.</p>
+<ol>
+<li>Acesse a pasta: <code>cd fluxa-app</code></li>
+<li>Instale as dependências: <code>pnpm install</code></li>
+<li>Crie um arquivo <code>.env</code> (com a URL do banco <code>DATABASE_URL</code>, chaves do Asaas, e <code>STELLAR_SERVICE_SECRET</code> idêntica a do serviço stellar).</li>
+<li>Rode as migrations do banco: <code>npx prisma migrate dev</code></li>
+<li>Inicie a aplicação: <code>pnpm dev</code></li>
+</ol>
+<hr>
+<h2>3. Como Usar</h2>
+<p>Com os dois terminais rodando:</p>
+<ol>
+<li>Acesse <strong><a href="http://localhost:3000">http://localhost:3000</a></strong> no seu navegador.</li>
+<li>Faça login para acessar seu <strong>Dashboard</strong>.</li>
+<li><strong>Crie uma cobrança</strong> definindo o valor em Reais.</li>
+<li>O sistema irá gerar um link de pagamento.</li>
+<li>Compartilhe o link com o cliente para que ele pague via PIX ou Boleto.</li>
+<li>Acompanhe os status no painel (Pendente, Pago, Transferência em andamento, Concluído).</li>
+</ol>
+<hr>
+<h2>4. Configurando o Ngrok para Webhooks (Testes Locais)</h2>
+<p>Para que o provedor de pagamentos (Asaas) consiga confirmar automaticamente os pagamentos na sua máquina local, ele precisa conseguir acessar o seu servidor. Como o <code>localhost</code> é fechado, utilizamos o <strong>ngrok</strong> para expor a porta local para a internet.</p>
+<h3>4.1 Instalando o Ngrok</h3>
+<p>Se estiver no macOS (usando Homebrew):</p>
+<pre><code class="language-bash">brew install ngrok/ngrok/ngrok
+</code></pre>
+<p>Ou baixe diretamente pelo site: <a href="https://ngrok.com/">ngrok.com</a></p>
+<h3>4.2 Iniciando o Túnel</h3>
+<p>Como o <code>fluxa-app</code> está rodando na porta <code>3000</code>, execute em um novo terminal:</p>
+<pre><code class="language-bash">ngrok http 3000
+</code></pre>
+<h3>4.3 Configurando no Asaas</h3>
+<ol>
+<li>O ngrok vai gerar uma URL pública no terminal (exemplo: <code>https://abcd-12-34.ngrok-free.app</code>).</li>
+<li>Acesse o painel do Asaas e vá nas <strong>Configurações de Webhook</strong>.</li>
+<li>Cadastre a URL do ngrok adicionando a rota do webhook do Fluxa. O link ficará parecido com:
+<code>https://abcd-12-34.ngrok-free.app/api/webhook-asaas</code></li>
+<li>Salve e agora todos os pagamentos simulados no Asaas notificarão sua aplicação local automaticamente!</li>
+</ol>
+    </div>
+</body>
+</html>

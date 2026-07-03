@@ -4,3 +4,4 @@ teste-onramp/node_modules/
 .docslocal/
 .romulo/.env
 docs/.env
+.etherfuse-usdc-state.json
