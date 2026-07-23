@@ -1,4 +1,17 @@
+allowBuilds:
+  '@prisma/engines': true
+  '@scarf/scarf': true
+  '@tree-sitter-grammars/tree-sitter-yaml': true
+  bcrypt: true
+  core-js-pure: true
+  esbuild: true
+  prisma: true
+  sharp: true
+  tree-sitter: true
+  tree-sitter-json: true
 overrides:
   lodash@<=4.17.23: '>=4.18.0'
   lodash@>=4.0.0 <=4.17.23: '>=4.18.0'
   postcss@<8.5.10: '>=8.5.10'
+  '@hono/node-server@*': '>=1.19.13'
+

@@ -1,0 +1,1 @@
+/Users/romulo/projetos/fluxa/fluxa/fluxa-contract/target/wasm32v1-none/release/charge_registry.wasm: /Users/romulo/projetos/fluxa/fluxa/fluxa-contract/contracts/charge_registry/src/lib.rs /Users/romulo/projetos/fluxa/fluxa/fluxa-contract/contracts/charge_registry/src/test.rs

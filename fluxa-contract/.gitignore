@@ -1,5 +1,10 @@
 # Rust's output directory
-target
+target/debug
+target/flycheck0
+target/release
+target/wasm32-unknown-unknown
+target/.rustc_info.json
+target/CACHEDIR.TAG
 
 # Local settings
 .soroban
